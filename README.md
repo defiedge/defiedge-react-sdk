@@ -1,95 +1,26 @@
-<p align="center">
-  <h3 align="center">Component Library/Tailwind Starter</h3>
+# React Tailwind Storybook
 
-  <p align="center">
-     A starter template to create your own React component library using TailwindCSS
-    <br />
-    <br />
-    <br />
-    <a href="https://github.com/kokiebisu/component-library-tailwind-starter/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/kokiebisu/component-library-tailwind-starter/issues">Request Feature</a>
-  </p>
-</p>
+[![License: MIT](https://img.shields.io/github/license/impulse/react-tailwind-storybook.svg)](https://opensource.org/licenses/MIT)
+<img alt="GitHub top language" src="https://img.shields.io/github/languages/top/impulse/react-tailwind-storybook.svg">
 
+## About
 
+Starter project for creating a React + TailwindCSS component library with Storybook.
 
-<!-- TABLE OF CONTENTS -->
-<details open="open">
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#motive">Motive</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-  </ol>
-</details>
+## Available Scripts
 
+Detailed docs following. For now look in `package.json`.
 
+## Contributing
 
-<!-- ABOUT THE PROJECT -->
-## Motive
+Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-I wasn't able to find a suitable repository that satisfied the following:
-* Minimum configuration (for flexibility)
-* Latest versions of Tailwind, Webpack Plugins
-* Storybook integration
-* Typescript support
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### Built With
+## License
 
-* [React](https://reactjs.org)
-* [Webpack](https://webpack.js.org)
-* [Storybook](https://storybook.js.org)
-* [Typescript](https://www.typescriptlang.org)
-
-
-<!-- GETTING STARTED -->
-## Getting Started
-
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
-
-### Installation
-
-1. Clone the repo
-   ```sh
-   git clone https://github.com/kokiebisu/component-library-tailwind-starter.git
-   ```
-2. Install NPM packages
-   ```sh
-   yarn
-   ```
-
-
-
-<!-- USAGE EXAMPLES -->
-## Usage
-
-1. Import the library into your project
-   ```sh
-   yarn add component-library-tailwind-starter
-   ```
-  
-2. Try importing the Button component
-    ```JS
-    import { Button } from 'component-library-tailwind-starter';
-    ```
+Distributed under the MIT License. See `LICENSE` for more information.
