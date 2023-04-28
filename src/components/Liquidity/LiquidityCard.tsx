@@ -17,13 +17,20 @@ import {
   Token,
 } from "@defiedge/sdk/dist/src/types/strategyQueryData";
 import { Strategy as MetadataStrategy } from "@defiedge/sdk/dist/src/types/strategyMetaQuery";
-import { Address, useAccount, useBalance, useSigner, useToken } from "wagmi";
+import {
+  Address,
+  useAccount,
+  useBalance,
+  useNetwork,
+  useSigner,
+  useToken,
+} from "wagmi";
 import { ethers } from "ethers";
 import clsx from "clsx";
 import axios from "axios";
 import Wallet from "../Wallet";
 import SingleInput from "../Common/SingleInput";
-import useIsMounted from "../../hooks/useIsMounted";
+import { useIsMounted } from "connectkit";
 
 interface LiquidityCardProps {
   strategyAddress: string;
@@ -44,7 +51,9 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   color = "#2463EB",
 }) => {
   const isMounted = useIsMounted();
+
   const { address, isConnected } = useAccount();
+  const { chain } = useNetwork();
   const { data: signer } = useSigner();
   const provider = signer?.provider as ethers.providers.JsonRpcProvider;
 
@@ -240,9 +249,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
     });
   }, [address, provider, strategyAddress, strategyToken]);
 
-  useEffect(() => {
-    fetchAllowances();
-    fetchUserShares();
+  const fetchLiquidity = useCallback(() => {
     axios
       .get(
         `https://api.defiedge.io/${
@@ -256,7 +263,19 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
       .catch((e) => {
         console.error(e);
       });
-  }, [fetchAllowances, fetchUserShares, network, strategyAddress]);
+  }, [network, strategyAddress]);
+
+  useEffect(() => {
+    fetchAllowances();
+    fetchUserShares();
+    fetchLiquidity();
+  }, [
+    fetchAllowances,
+    fetchUserShares,
+    fetchLiquidity,
+    network,
+    strategyAddress,
+  ]);
 
   const handleToken0Max = useCallback(() => {
     if (token0Balance && strategy?.token0) {
@@ -470,193 +489,232 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
           </div>
         </div>
 
-        <div className="p-4 mt-4 bg-white rounded-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-zinc-500 font-medium uppercase text-sm">
-              Current Range
-            </span>
-            <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
-              <button
-                className={clsx(
-                  "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                  rangeToken?.symbol === strategy?.token0.symbol && " bg-white"
-                )}
-                onClick={() => {
-                  setRangeToken(strategy?.token0);
-                }}
-              >
-                {strategy?.token0.symbol}
-              </button>
-              <button
-                className={clsx(
-                  "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                  rangeToken?.symbol === strategy?.token1.symbol && "bg-white"
-                )}
-                onClick={() => {
-                  setRangeToken(strategy?.token1);
-                }}
-              >
-                {strategy?.token1.symbol}
-              </button>
+        {isConnected && chain?.id === network ? (
+          <>
+            <div className="p-4 mt-4 bg-white rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-zinc-500 font-medium uppercase text-sm">
+                  Current Range
+                </span>
+                <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
+                  <button
+                    className={clsx(
+                      "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                      rangeToken?.symbol === strategy?.token0.symbol &&
+                        " bg-white"
+                    )}
+                    onClick={() => {
+                      setRangeToken(strategy?.token0);
+                    }}
+                  >
+                    {strategy?.token0.symbol}
+                  </button>
+                  <button
+                    className={clsx(
+                      "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                      rangeToken?.symbol === strategy?.token1.symbol &&
+                        "bg-white"
+                    )}
+                    onClick={() => {
+                      setRangeToken(strategy?.token1);
+                    }}
+                  >
+                    {strategy?.token1.symbol}
+                  </button>
+                </div>
+              </div>
+              {currentRange && (
+                <p className="mt-3 font-mono">
+                  {rangeToken?.symbol === strategy?.token0.symbol
+                    ? currentRange.lowerTickInA
+                    : currentRange.lowerTickInB}{" "}
+                  -{" "}
+                  {rangeToken?.symbol === strategy?.token1.symbol
+                    ? currentRange.upperTickInB
+                    : currentRange.upperTickInA}{" "}
+                  <span className="pl-2 text-sm">
+                    {rangeToken?.symbol === strategy?.token0.symbol
+                      ? strategy?.token1.symbol
+                      : strategy?.token0.symbol}{" "}
+                    per{" "}
+                    {rangeToken?.symbol === strategy?.token1.symbol
+                      ? strategy?.token1.symbol
+                      : strategy?.token0.symbol}
+                  </span>
+                </p>
+              )}
             </div>
-          </div>
-          {currentRange && (
-            <p className="mt-3 font-mono">
-              {rangeToken?.symbol === strategy?.token0.symbol
-                ? currentRange.lowerTickInA
-                : currentRange.lowerTickInB}{" "}
-              -{" "}
-              {rangeToken?.symbol === strategy?.token1.symbol
-                ? currentRange.upperTickInB
-                : currentRange.upperTickInA}{" "}
-              <span className="pl-2 text-sm">
-                {rangeToken?.symbol === strategy?.token0.symbol
-                  ? strategy?.token1.symbol
-                  : strategy?.token0.symbol}{" "}
-                per{" "}
-                {rangeToken?.symbol === strategy?.token1.symbol
-                  ? strategy?.token1.symbol
-                  : strategy?.token0.symbol}
-              </span>
-            </p>
-          )}
-        </div>
 
-        <div className="p-4 mt-4 bg-white rounded-lg">
-          <Tab.Group>
-            <Tab.List className="flex space-x-1 rounded-xl bg-zinc-100 p-1">
-              <Tab
-                className={({ selected }) =>
-                  clsx(
-                    "w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-zinc-700 focus:outline-none",
-                    selected
-                      ? "bg-white shadow"
-                      : "text-zinc-100 hover:bg-white/[0.12]"
-                  )
-                }
-              >
-                Deposit
-              </Tab>
-              <Tab
-                className={({ selected }) =>
-                  clsx(
-                    "w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-zinc-700 focus:outline-none",
-                    selected
-                      ? "bg-white shadow"
-                      : "text-zinc-100 hover:bg-white/[0.12]"
-                  )
-                }
-              >
-                Withdraw
-              </Tab>
-            </Tab.List>
-            <Tab.Panels>
-              <Tab.Panel>
-                <div className="px-1 mt-2">
-                  {liquidityRatio ? (
-                    <div className="space-y-2">
-                      <div className="flex space-x-2 justify-end py-2">
-                        <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
-                          <button
-                            className={clsx(
-                              "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                              depositType === "BOTH" && " bg-white"
-                            )}
-                            onClick={() => setDepositType("BOTH")}
-                          >
-                            Both
-                          </button>
-                          <button
-                            className={clsx(
-                              "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                              depositType === "SINGLE" && "bg-white"
-                            )}
-                            onClick={() => setDepositType("SINGLE")}
-                          >
-                            Single
-                          </button>
-                        </div>
-                        {depositType === "SINGLE" && (
-                          <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
-                            <button
-                              className={clsx(
-                                "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                                singleSideToken?.symbol ===
-                                  strategy?.token0.symbol && " bg-white"
-                              )}
-                              onClick={() => {
-                                setAmount0("");
-                                setSingleSideToken(strategy?.token0);
-                              }}
-                            >
-                              {strategy?.token0.symbol}
-                            </button>
-                            <button
-                              className={clsx(
-                                "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                                singleSideToken?.symbol ===
-                                  strategy?.token1.symbol && "bg-white"
-                              )}
-                              onClick={() => {
-                                setAmount1("");
-                                setSingleSideToken(strategy?.token1);
-                              }}
-                            >
-                              {strategy?.token1.symbol}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      {depositType === "BOTH" ? (
+            <div className="p-4 mt-4 bg-white rounded-lg">
+              <Tab.Group>
+                <Tab.List className="flex space-x-1 rounded-xl bg-zinc-100 p-1">
+                  <Tab
+                    className={({ selected }) =>
+                      clsx(
+                        "w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-zinc-700 focus:outline-none",
+                        selected
+                          ? "bg-white shadow"
+                          : "text-zinc-100 hover:bg-white/[0.12]"
+                      )
+                    }
+                    onChange={() => {
+                      refetchBalance0();
+                      refetchBalance1();
+                      fetchAllowances();
+                    }}
+                  >
+                    Deposit
+                  </Tab>
+                  <Tab
+                    className={({ selected }) =>
+                      clsx(
+                        "w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-zinc-700 focus:outline-none",
+                        selected
+                          ? "bg-white shadow"
+                          : "text-zinc-100 hover:bg-white/[0.12]"
+                      )
+                    }
+                    onChange={() => {
+                      fetchLiquidity();
+                      fetchUserShares();
+                    }}
+                  >
+                    Withdraw
+                  </Tab>
+                </Tab.List>
+                <Tab.Panels>
+                  <Tab.Panel>
+                    <div className="px-1 mt-2">
+                      {liquidityRatio ? (
                         <div className="space-y-2">
-                          <div className="border border-zinc-200/50 rounded-2xl w-full p-2 flex flex-col items-end bg-zinc-50">
-                            <div className="flex">
-                              <input
-                                value={amount0}
-                                type="number"
-                                className="pt-4 pb-2 pl-2 pr-6 text-zinc-800 font-mono text-4xl focus:outline-none flex-1 w-full bg-transparent"
-                                placeholder="0.00"
-                                onChange={(e) => handleAmount0Change(e)}
-                              />
-                              <div className="pt-4 flex flex-col items-end space-y-2">
-                                <div className="py-0.5 rounded-full bg-zinc-200 text-zinc-800 font-medium w-[64px] flex items-center justify-center">
+                          <div className="flex space-x-2 justify-end py-2">
+                            <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
+                              <button
+                                className={clsx(
+                                  "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                  depositType === "BOTH" && " bg-white"
+                                )}
+                                onClick={() => setDepositType("BOTH")}
+                              >
+                                Both
+                              </button>
+                              <button
+                                className={clsx(
+                                  "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                  depositType === "SINGLE" && "bg-white"
+                                )}
+                                onClick={() => setDepositType("SINGLE")}
+                              >
+                                Single
+                              </button>
+                            </div>
+                            {depositType === "SINGLE" && (
+                              <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
+                                <button
+                                  className={clsx(
+                                    "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                    singleSideToken?.symbol ===
+                                      strategy?.token0.symbol && " bg-white"
+                                  )}
+                                  onClick={() => {
+                                    setAmount0("");
+                                    setSingleSideToken(strategy?.token0);
+                                  }}
+                                >
                                   {strategy?.token0.symbol}
-                                </div>
-                              </div>
-                            </div>
-                            {token0Balance && (
-                              <span
-                                className="text-zinc-500 text-sm px-2 hover:underline hover:cursor-pointer"
-                                onClick={handleToken0Max}
-                              >
-                                Balance: {token0Balance?.formatted ?? "0"}
-                              </span>
-                            )}
-                          </div>
-                          <div className="border border-zinc-200/50 rounded-2xl w-full p-2 flex flex-col items-end bg-zinc-50">
-                            <div className="flex">
-                              <input
-                                value={amount1}
-                                type="number"
-                                className="pt-4 pb-2 pl-2 pr-6 text-zinc-800 font-mono text-4xl focus:outline-none flex-1 w-full bg-transparent"
-                                placeholder="0.00"
-                                onChange={(e) => handleAmount1Change(e)}
-                              />
-                              <div className="pt-4 flex flex-col items-end space-y-2">
-                                <div className="py-0.5 rounded-full bg-zinc-200 text-zinc-800 font-medium w-[64px] flex items-center justify-center">
+                                </button>
+                                <button
+                                  className={clsx(
+                                    "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                    singleSideToken?.symbol ===
+                                      strategy?.token1.symbol && "bg-white"
+                                  )}
+                                  onClick={() => {
+                                    setAmount1("");
+                                    setSingleSideToken(strategy?.token1);
+                                  }}
+                                >
                                   {strategy?.token1.symbol}
-                                </div>
+                                </button>
                               </div>
-                            </div>
-                            {token1Balance && (
-                              <span
-                                className="text-zinc-500 text-sm px-2 hover:underline hover:cursor-pointer"
-                                onClick={handleToken1Max}
-                              >
-                                Balance: {token1Balance?.formatted ?? "0"}
-                              </span>
                             )}
                           </div>
+                          {depositType === "BOTH" ? (
+                            <div className="space-y-2">
+                              <div className="border border-zinc-200/50 rounded-2xl w-full p-2 flex flex-col items-end bg-zinc-50">
+                                <div className="flex">
+                                  <input
+                                    value={amount0}
+                                    type="number"
+                                    className="pt-4 pb-2 pl-2 pr-6 text-zinc-800 font-mono text-4xl focus:outline-none flex-1 w-full bg-transparent"
+                                    placeholder="0.00"
+                                    onChange={(e) => handleAmount0Change(e)}
+                                  />
+                                  <div className="pt-4 flex flex-col items-end space-y-2">
+                                    <div className="py-0.5 rounded-full bg-zinc-200 text-zinc-800 font-medium w-[64px] flex items-center justify-center">
+                                      {strategy?.token0.symbol}
+                                    </div>
+                                  </div>
+                                </div>
+                                {token0Balance && (
+                                  <span
+                                    className="text-zinc-500 text-sm px-2 hover:underline hover:cursor-pointer"
+                                    onClick={handleToken0Max}
+                                  >
+                                    Balance: {token0Balance?.formatted ?? "0"}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="border border-zinc-200/50 rounded-2xl w-full p-2 flex flex-col items-end bg-zinc-50">
+                                <div className="flex">
+                                  <input
+                                    value={amount1}
+                                    type="number"
+                                    className="pt-4 pb-2 pl-2 pr-6 text-zinc-800 font-mono text-4xl focus:outline-none flex-1 w-full bg-transparent"
+                                    placeholder="0.00"
+                                    onChange={(e) => handleAmount1Change(e)}
+                                  />
+                                  <div className="pt-4 flex flex-col items-end space-y-2">
+                                    <div className="py-0.5 rounded-full bg-zinc-200 text-zinc-800 font-medium w-[64px] flex items-center justify-center">
+                                      {strategy?.token1.symbol}
+                                    </div>
+                                  </div>
+                                </div>
+                                {token1Balance && (
+                                  <span
+                                    className="text-zinc-500 text-sm px-2 hover:underline hover:cursor-pointer"
+                                    onClick={handleToken1Max}
+                                  >
+                                    Balance: {token1Balance?.formatted ?? "0"}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <SingleInput
+                              amount={
+                                singleSideTokenType === SingleSideTokenType.ZERO
+                                  ? amount0
+                                  : amount1
+                              }
+                              setAmount={
+                                singleSideTokenType === SingleSideTokenType.ZERO
+                                  ? setAmount0
+                                  : setAmount1
+                              }
+                              balance={
+                                singleSideTokenType === SingleSideTokenType.ZERO
+                                  ? token0Balance?.formatted
+                                  : token1Balance?.formatted
+                              }
+                              rawBalance={
+                                singleSideTokenType === SingleSideTokenType.ZERO
+                                  ? token0Balance?.value
+                                  : token1Balance?.value
+                              }
+                              token={singleSideToken}
+                            />
+                          )}
                         </div>
                       ) : (
                         <SingleInput
@@ -683,173 +741,153 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                           token={singleSideToken}
                         />
                       )}
-                    </div>
-                  ) : (
-                    <SingleInput
-                      amount={
-                        singleSideTokenType === SingleSideTokenType.ZERO
-                          ? amount0
-                          : amount1
-                      }
-                      setAmount={
-                        singleSideTokenType === SingleSideTokenType.ZERO
-                          ? setAmount0
-                          : setAmount1
-                      }
-                      balance={
-                        singleSideTokenType === SingleSideTokenType.ZERO
-                          ? token0Balance?.formatted
-                          : token1Balance?.formatted
-                      }
-                      rawBalance={
-                        singleSideTokenType === SingleSideTokenType.ZERO
-                          ? token0Balance?.value
-                          : token1Balance?.value
-                      }
-                      token={singleSideToken}
-                    />
-                  )}
 
-                  <div className="mt-4">
-                    {!isConnected ? (
-                      <Wallet />
-                    ) : strategy && (!isToken0Approved || !isToken1Approved) ? (
-                      <div className={`flex items-center space-x-2`}>
-                        {!isToken0Approved && (
+                      <div className="mt-4">
+                        {strategy &&
+                        (!isToken0Approved || !isToken1Approved) ? (
+                          <div className={`flex items-center space-x-2`}>
+                            {!isToken0Approved && (
+                              <button
+                                className={`w-full p-4 rounded-lg text-sm bg-[${color}] bg-opacity-20 text-[#2463EB] font-medium disabled:bg-zinc-100 disabled:text-zinc-500 disabled:cursor-not-allowed`}
+                                disabled={approve0Loading}
+                                onClick={() => approveToken0()}
+                              >
+                                {approve0Loading
+                                  ? "Approving..."
+                                  : `Approve ${strategy?.token0.symbol}`}
+                              </button>
+                            )}
+                            {!isToken1Approved && (
+                              <button
+                                className={`w-full p-4 rounded-lg text-sm bg-[${color}] bg-opacity-20 text-[#2463EB] font-medium disabled:bg-zinc-100 disabled:text-zinc-500 disabled:cursor-not-allowed`}
+                                disabled={approve1Loading}
+                                onClick={() => approveToken1()}
+                              >
+                                {approve1Loading
+                                  ? "Approving..."
+                                  : `Approve ${strategy?.token1.symbol}`}
+                              </button>
+                            )}
+                          </div>
+                        ) : (
                           <button
-                            className={`w-full p-4 rounded-lg text-sm bg-[${color}] bg-opacity-20 text-[#2463EB] font-medium disabled:bg-zinc-100 disabled:text-zinc-500 disabled:cursor-not-allowed`}
-                            disabled={approve0Loading}
-                            onClick={() => approveToken0()}
+                            className={`w-full p-4 rounded-lg text-sm bg-[${color}] text-white font-medium disabled:bg-zinc-100 disabled:text-zinc-500 disabled:cursor-not-allowed`}
+                            disabled={!!depositError || depositLoading}
+                            onClick={() => deposit()}
                           >
-                            {approve0Loading
-                              ? "Approving..."
-                              : `Approve ${strategy?.token0.symbol}`}
-                          </button>
-                        )}
-                        {!isToken1Approved && (
-                          <button
-                            className={`w-full p-4 rounded-lg text-sm bg-[${color}] bg-opacity-20 text-[#2463EB] font-medium disabled:bg-zinc-100 disabled:text-zinc-500 disabled:cursor-not-allowed`}
-                            disabled={approve1Loading}
-                            onClick={() => approveToken1()}
-                          >
-                            {approve1Loading
-                              ? "Approving..."
-                              : `Approve ${strategy?.token1.symbol}`}
+                            {depositError
+                              ? depositError
+                              : depositLoading
+                              ? "Depositing..."
+                              : "Deposit"}
                           </button>
                         )}
                       </div>
-                    ) : (
-                      <button
-                        className={`w-full p-4 rounded-lg text-sm bg-[${color}] text-white font-medium disabled:bg-zinc-100 disabled:text-zinc-500 disabled:cursor-not-allowed`}
-                        disabled={!!depositError || depositLoading}
-                        onClick={() => deposit()}
-                      >
-                        {depositError
-                          ? depositError
-                          : depositLoading
-                          ? "Depositing..."
-                          : "Deposit"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </Tab.Panel>
-              <Tab.Panel>
-                <div className="px-1 mt-2">
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-4xl text-zinc-800 font-medium">
-                      {removePercentage}%
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      {[25, 50, 75, 100].map((val, idx) => {
-                        return (
-                          <>
-                            <button
-                              key={idx}
-                              className={clsx(
-                                "px-2 py-1 text-sm border rounded",
-                                removePercentage === val.toString()
-                                  ? "bg-[#2463EB] text-white"
-                                  : "border-zinc-200 bg-zinc-50 text-zinc-800"
+                    </div>
+                  </Tab.Panel>
+                  <Tab.Panel>
+                    <div className="px-1 mt-2">
+                      <div className="flex items-center justify-between mt-4">
+                        <span className="text-4xl text-zinc-800 font-medium">
+                          {removePercentage}%
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          {[25, 50, 75, 100].map((val, idx) => {
+                            return (
+                              <>
+                                <button
+                                  key={idx}
+                                  className={clsx(
+                                    "px-2 py-1 text-sm border rounded",
+                                    removePercentage === val.toString()
+                                      ? "bg-[#2463EB] text-white"
+                                      : "border-zinc-200 bg-zinc-50 text-zinc-800"
+                                  )}
+                                  onClick={() =>
+                                    setRemovePercentage(val.toString())
+                                  }
+                                >
+                                  {val === 100 ? "Max" : `${val}%`}
+                                </button>
+                              </>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <input
+                        aria-labelledby="input slider"
+                        list="percentages"
+                        max="100"
+                        min="1"
+                        step="1"
+                        type="range"
+                        className="mt-3 w-full"
+                        value={removePercentage}
+                        onChange={(e) => setRemovePercentage(e.target.value)}
+                      />
+
+                      <div className="flex flex-col space-y-2 mt-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-zinc-500">Your Share</span>
+                          <span className="font-medium">
+                            {userShare &&
+                              parseFloat(Number(userShare).toFixed(4))}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-zinc-500">
+                            {strategy?.token0.symbol}
+                          </span>
+                          <span className="font-medium">
+                            {strategy?.amount0 &&
+                              parseFloat(
+                                (
+                                  strategyAmount0 *
+                                  userShareFraction *
+                                  (Number(removePercentage) / 100)
+                                ).toFixed(4)
                               )}
-                              onClick={() =>
-                                setRemovePercentage(val.toString())
-                              }
-                            >
-                              {val === 100 ? "Max" : `${val}%`}
-                            </button>
-                          </>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <input
-                    aria-labelledby="input slider"
-                    list="percentages"
-                    max="100"
-                    min="1"
-                    step="1"
-                    type="range"
-                    className="mt-3 w-full"
-                    value={removePercentage}
-                    onChange={(e) => setRemovePercentage(e.target.value)}
-                  />
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-zinc-500">
+                            {strategy?.token1.symbol}
+                          </span>
+                          <span className="font-medium">
+                            {strategy?.amount1 &&
+                              parseFloat(
+                                (
+                                  strategyAmount1 *
+                                  userShareFraction *
+                                  (Number(removePercentage) / 100)
+                                ).toFixed(4)
+                              )}
+                          </span>
+                        </div>
+                      </div>
 
-                  <div className="flex flex-col space-y-2 mt-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-zinc-500">Your Share</span>
-                      <span className="font-medium">
-                        {userShare && parseFloat(Number(userShare).toFixed(4))}
-                      </span>
+                      <button
+                        className={`mt-6 w-full p-4 rounded-lg text-sm bg-[${color}] text-white font-medium disabled:bg-zinc-100 disabled:text-zinc-500 disabled:cursor-not-allowed`}
+                        disabled={!!withdrawError || withdrawLoading}
+                        onClick={() => remove()}
+                      >
+                        {withdrawError
+                          ? withdrawError
+                          : withdrawLoading
+                          ? "Withdrawing..."
+                          : "Withdraw"}
+                      </button>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-zinc-500">
-                        {strategy?.token0.symbol}
-                      </span>
-                      <span className="font-medium">
-                        {strategy?.amount0 &&
-                          parseFloat(
-                            (
-                              strategyAmount0 *
-                              userShareFraction *
-                              (Number(removePercentage) / 100)
-                            ).toFixed(4)
-                          )}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-zinc-500">
-                        {strategy?.token1.symbol}
-                      </span>
-                      <span className="font-medium">
-                        {strategy?.amount1 &&
-                          parseFloat(
-                            (
-                              strategyAmount1 *
-                              userShareFraction *
-                              (Number(removePercentage) / 100)
-                            ).toFixed(4)
-                          )}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    className={`mt-6 w-full p-4 rounded-lg text-sm bg-[${color}] text-white font-medium disabled:bg-zinc-100 disabled:text-zinc-500 disabled:cursor-not-allowed`}
-                    disabled={!!withdrawError || withdrawLoading}
-                    onClick={() => remove()}
-                  >
-                    {withdrawError
-                      ? withdrawError
-                      : withdrawLoading
-                      ? "Withdrawing..."
-                      : "Withdraw"}
-                  </button>
-                </div>
-              </Tab.Panel>
-            </Tab.Panels>
-          </Tab.Group>
-        </div>
+                  </Tab.Panel>
+                </Tab.Panels>
+              </Tab.Group>
+            </div>
+          </>
+        ) : (
+          <div className="pt-4">
+            <Wallet network={network} />
+          </div>
+        )}
       </div>
     </>
   );
