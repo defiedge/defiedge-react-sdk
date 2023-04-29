@@ -10,12 +10,11 @@
 
 To get started with @defiedge/react, you'll need to install it in your project. You can do this using npm:
 
-```
+```bash
 npm install @defiedge/react
-```
-or
 
-```
+# or
+
 yarn add @defiedge/react
 ```
 
@@ -50,10 +49,10 @@ function App() {
 The `<LiquidityCard>` component provides a button that allows users to connect their wallet to the DefiEdge protocol. It takes an `strategyAddress` and `network`  prop that with show stats and functionality for that strategy.
 
 ```jsx
-import { LiquidityCard, SupportedNetworkId } from '@defiedge/react'
+import { LiquidityCard, SupportedChainId } from '@defiedge/react'
 
 function MyComponent() {
-  return <LiquidityCard address={strategyAddress} network={SupportedNetworkId.mainnet} />
+  return <LiquidityCard address={strategyAddress} network={SupportedChainId.mainnet} />
 }
 ```
 
