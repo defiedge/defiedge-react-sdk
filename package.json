@@ -1,9 +1,11 @@
 {
   "name": "@defiedge/react",
-  "version": "0.0.1",
+  "version": "0.0.1-a",
   "module": "./build/index.es.js",
   "types": "./build/index.d.ts",
-  "files": ["build"],
+  "files": [
+    "build"
+  ],
   "description": "React component for defiedge",
   "publishConfig": {
     "access": "public",
@@ -34,7 +36,6 @@
     "build": "rollup -c rollup.config.js",
     "test": "jest",
     "test:watch": "jest --watch",
-
     "coverage": "jest --runInBand",
     "postversion": "git push && git push --tags",
     "prepublishOnly": "yarn build",
