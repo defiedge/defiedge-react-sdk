@@ -10,6 +10,7 @@ import {
   depositLP,
   removeLP,
   getRanges,
+  getLiquidity,
 } from "@defiedge/sdk";
 import { SupportedChainId } from "@defiedge/sdk/dist/src/types";
 import {
@@ -27,11 +28,10 @@ import {
 } from "wagmi";
 import { ethers } from "ethers";
 import clsx from "clsx";
-import axios from "axios";
 import Wallet from "../Wallet";
 import SingleInput from "../Common/SingleInput";
 import { useIsMounted } from "connectkit";
-import "../../css/index.src.css";
+import "../../css/index.css";
 
 interface LiquidityCardProps {
   strategyAddress: string;
@@ -51,6 +51,8 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   network,
   color = "#2463EB",
 }) => {
+  strategyAddress = strategyAddress?.toLowerCase();
+
   const isMounted = useIsMounted();
 
   const { address, isConnected } = useAccount();
@@ -69,6 +71,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   const [userShareFraction, setUserShareFraction] = useState<number>(0);
   const [strategyAmount0, setStrategyAmount0] = useState<number>(0);
   const [strategyAmount1, setStrategyAmount1] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
   const [currentRange, setCurrentRange] = useState<
     | {
         lowerTickInA: number;
@@ -113,11 +116,16 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
     Promise.all([
       getStrategyInfo(network, strategyAddress),
       getStrategyMetaData(network, strategyAddress),
-    ]).then(([info, metadata]) => {
-      setStrategy({ ...info, ...metadata });
-      setSingleSideToken(info.token0);
-      setRangeToken(info.token0);
-    });
+    ])
+      .then(([info, metadata]) => {
+        setStrategy({ ...info, ...metadata });
+        setSingleSideToken(info.token0);
+        setRangeToken(info.token0);
+      })
+      .catch((e) => {
+        console.error(e);
+      })
+      .finally(() => setLoading(false));
   }, [network, strategyAddress]);
 
   useEffect(() => {
@@ -126,10 +134,14 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
     Promise.all([
       getLiquidityRatio(strategyAddress, provider),
       getRanges(strategyAddress, provider),
-    ]).then(([liquidityRatio, ranges]) => {
-      setLiquidityRatio(liquidityRatio);
-      setCurrentRange(ranges[0] as any);
-    });
+    ])
+      .then(([liquidityRatio, ranges]) => {
+        setLiquidityRatio(liquidityRatio);
+        setCurrentRange(ranges[0] as any);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
   }, [provider, strategyAddress]);
 
   const fetchAllowances = useCallback(() => {
@@ -150,10 +162,14 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
         strategyAddress,
         provider
       ),
-    ]).then(([token0, token1]) => {
-      setIsToken0Approved(token0);
-      setIsToken1Approved(token1);
-    });
+    ])
+      .then(([token0, token1]) => {
+        setIsToken0Approved(token0);
+        setIsToken1Approved(token1);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
   }, [address, amount0, amount1, provider, strategyAddress]);
 
   const { data: token0Balance, refetch: refetchBalance0 } = useBalance({
@@ -238,26 +254,27 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   const fetchUserShares = useCallback(() => {
     if (!address || !provider) return;
 
-    getUserDeshareBalance(address, strategyAddress, provider).then((data) => {
-      setUserShare(data);
+    getUserDeshareBalance(address, strategyAddress, provider)
+      .then((data) => {
+        setUserShare(data);
 
-      if (strategyToken) {
-        const fraction =
-          Number(data) / Number(strategyToken.totalSupply.formatted);
+        if (strategyToken) {
+          const fraction =
+            Number(data) / Number(strategyToken.totalSupply.formatted);
 
-        setUserShareFraction(fraction);
-      }
-    });
+          setUserShareFraction(fraction);
+        }
+      })
+      .catch((e) => {
+        console.error(e);
+      });
   }, [address, provider, strategyAddress, strategyToken]);
 
   const fetchLiquidity = useCallback(() => {
-    axios
-      .get(
-        `https://api.defiedge.io/${
-          Object.entries(SupportedChainId).find((e) => e[1] === network)![0]
-        }/${strategyAddress}/liquidity`
-      )
-      .then(({ data }) => {
+    if (!provider) return;
+
+    getLiquidity(strategyAddress, provider)
+      .then((data) => {
         setStrategyAmount0(data.amount0Total);
         setStrategyAmount1(data.amount1Total);
       })
@@ -444,6 +461,13 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
   if (!isMounted) return null;
 
+  if (loading)
+    return <span className="text-xs opacity-80">Loading Widget...</span>;
+
+  if (!strategy) {
+    return <span className="text-xs opacity-80">Failed to load widget!</span>;
+  }
+
   return (
     <>
       <div className="p-4 font-sans bg-zinc-100 rounded-lg flex flex-col w-full max-w-lg">
@@ -451,39 +475,23 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
           <div className="flex flex-col space-y-4 text-sm">
             <div className="flex flex-col">
               <span className="text-zinc-800 font-bold tracking-wide text-lg">
-                {strategy?.title}
+                {strategy.title}
               </span>
               <span className="text-zinc-400 text-xs pt-0.5">
-                {strategy?.subTitle}
+                {strategy.subTitle}
               </span>
             </div>
             <div className="flex flex-col space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-zinc-500">TVL</span>
-                <span>
-                  $
-                  {strategy?.aum &&
-                    parseFloat(strategy?.aum.toFixed(4)).toLocaleString(
-                      "en-US"
-                    )}
+                <span className="text-black/80" title={strategy.aum.toString()}>
+                  ${Number(strategy.aum).toLocaleString("en-US")}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-zinc-500">Share Price</span>
-                <span>
-                  $
-                  {strategy?.sharePrice &&
-                    parseFloat(strategy?.sharePrice.toFixed(4)).toLocaleString(
-                      "en-US"
-                    )}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-zinc-500">Returns Since Inception</span>
-                <span>
-                  {strategy?.sinceInception?.USD &&
-                    parseFloat(strategy?.sinceInception.USD.toFixed(2))}
-                  %
+                <span className="text-zinc-500">Fees APR</span>
+                <span className="text-black/80">
+                  {strategy.feesApr.USD.toLocaleString("en-US")}%
                 </span>
               </div>
             </div>
@@ -501,46 +509,46 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                   <button
                     className={clsx(
                       "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                      rangeToken?.symbol === strategy?.token0.symbol &&
+                      rangeToken?.symbol === strategy.token0.symbol &&
                         " bg-white"
                     )}
                     onClick={() => {
-                      setRangeToken(strategy?.token0);
+                      setRangeToken(strategy.token0);
                     }}
                   >
-                    {strategy?.token0.symbol}
+                    {strategy.token0.symbol}
                   </button>
                   <button
                     className={clsx(
                       "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                      rangeToken?.symbol === strategy?.token1.symbol &&
+                      rangeToken?.symbol === strategy.token1.symbol &&
                         "bg-white"
                     )}
                     onClick={() => {
-                      setRangeToken(strategy?.token1);
+                      setRangeToken(strategy.token1);
                     }}
                   >
-                    {strategy?.token1.symbol}
+                    {strategy.token1.symbol}
                   </button>
                 </div>
               </div>
               {currentRange && (
                 <p className="mt-3 font-mono">
-                  {rangeToken?.symbol === strategy?.token0.symbol
+                  {rangeToken?.symbol === strategy.token0.symbol
                     ? currentRange.lowerTickInA
                     : currentRange.lowerTickInB}{" "}
                   -{" "}
-                  {rangeToken?.symbol === strategy?.token1.symbol
+                  {rangeToken?.symbol === strategy.token1.symbol
                     ? currentRange.upperTickInB
                     : currentRange.upperTickInA}{" "}
                   <span className="pl-2 text-sm">
-                    {rangeToken?.symbol === strategy?.token0.symbol
-                      ? strategy?.token1.symbol
-                      : strategy?.token0.symbol}{" "}
+                    {rangeToken?.symbol === strategy.token0.symbol
+                      ? strategy.token1.symbol
+                      : strategy.token0.symbol}{" "}
                     per{" "}
-                    {rangeToken?.symbol === strategy?.token1.symbol
-                      ? strategy?.token1.symbol
-                      : strategy?.token0.symbol}
+                    {rangeToken?.symbol === strategy.token1.symbol
+                      ? strategy.token1.symbol
+                      : strategy.token0.symbol}
                   </span>
                 </p>
               )}
@@ -615,27 +623,27 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                   className={clsx(
                                     "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                                     singleSideToken?.symbol ===
-                                      strategy?.token0.symbol && " bg-white"
+                                      strategy.token0.symbol && " bg-white"
                                   )}
                                   onClick={() => {
                                     setAmount0("");
-                                    setSingleSideToken(strategy?.token0);
+                                    setSingleSideToken(strategy.token0);
                                   }}
                                 >
-                                  {strategy?.token0.symbol}
+                                  {strategy.token0.symbol}
                                 </button>
                                 <button
                                   className={clsx(
                                     "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                                     singleSideToken?.symbol ===
-                                      strategy?.token1.symbol && "bg-white"
+                                      strategy.token1.symbol && "bg-white"
                                   )}
                                   onClick={() => {
                                     setAmount1("");
-                                    setSingleSideToken(strategy?.token1);
+                                    setSingleSideToken(strategy.token1);
                                   }}
                                 >
-                                  {strategy?.token1.symbol}
+                                  {strategy.token1.symbol}
                                 </button>
                               </div>
                             )}
@@ -653,7 +661,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                   />
                                   <div className="pt-4 flex flex-col items-end space-y-2">
                                     <div className="py-0.5 rounded-full bg-zinc-200 text-zinc-800 font-medium w-[64px] flex items-center justify-center">
-                                      {strategy?.token0.symbol}
+                                      {strategy.token0.symbol}
                                     </div>
                                   </div>
                                 </div>
@@ -677,7 +685,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                   />
                                   <div className="pt-4 flex flex-col items-end space-y-2">
                                     <div className="py-0.5 rounded-full bg-zinc-200 text-zinc-800 font-medium w-[64px] flex items-center justify-center">
-                                      {strategy?.token1.symbol}
+                                      {strategy.token1.symbol}
                                     </div>
                                   </div>
                                 </div>
@@ -755,7 +763,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                               >
                                 {approve0Loading
                                   ? "Approving..."
-                                  : `Approve ${strategy?.token0.symbol}`}
+                                  : `Approve ${strategy.token0.symbol}`}
                               </button>
                             )}
                             {!isToken1Approved && (
@@ -766,7 +774,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                               >
                                 {approve1Loading
                                   ? "Approving..."
-                                  : `Approve ${strategy?.token1.symbol}`}
+                                  : `Approve ${strategy.token1.symbol}`}
                               </button>
                             )}
                           </div>
@@ -837,10 +845,10 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-zinc-500">
-                            {strategy?.token0.symbol}
+                            {strategy.token0.symbol}
                           </span>
                           <span className="font-medium">
-                            {strategy?.amount0 &&
+                            {strategy.amount0 &&
                               parseFloat(
                                 (
                                   strategyAmount0 *
@@ -852,10 +860,10 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-zinc-500">
-                            {strategy?.token1.symbol}
+                            {strategy.token1.symbol}
                           </span>
                           <span className="font-medium">
-                            {strategy?.amount1 &&
+                            {strategy.amount1 &&
                               parseFloat(
                                 (
                                   strategyAmount1 *

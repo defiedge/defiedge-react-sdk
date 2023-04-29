@@ -16,11 +16,9 @@ interface DefiedgeProviderProps {
 
 const DefiedgeProvider: FC<DefiedgeProviderProps> = ({ children }) => {
   return (
-    <>
-      <WagmiConfig client={client}>
-        <ConnectKitProvider>{children}</ConnectKitProvider>
-      </WagmiConfig>
-    </>
+    <WagmiConfig client={client}>
+      <ConnectKitProvider>{children}</ConnectKitProvider>
+    </WagmiConfig>
   );
 };
 
