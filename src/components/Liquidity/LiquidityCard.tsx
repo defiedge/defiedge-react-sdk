@@ -31,6 +31,7 @@ import axios from "axios";
 import Wallet from "../Wallet";
 import SingleInput from "../Common/SingleInput";
 import { useIsMounted } from "connectkit";
+import "../../css/index.src.css";
 
 interface LiquidityCardProps {
   strategyAddress: string;
