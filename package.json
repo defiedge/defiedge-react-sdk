@@ -1,6 +1,6 @@
 {
   "name": "@defiedge/react",
-  "version": "0.0.1-c",
+  "version": "0.0.2-a",
   "module": "./build/index.es.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -38,7 +38,7 @@
     "test:watch": "jest --watch",
     "coverage": "jest --runInBand",
     "postversion": "git push && git push --tags",
-    "prepublishOnly": "yarn build:tailwind && yarn build",
+    "prepublishOnly": "rm-cli -r ./build && yarn build:tailwind && yarn build",
     "version": " git add -A src"
   },
   "devDependencies": {
@@ -70,6 +70,7 @@
     "postcss": "^8.4.23",
     "postcss-cli": "^8.3.0",
     "react-docgen-typescript-loader": "^3.7.2",
+    "rm-cli": "^1.4.2",
     "rollup": "^2.34.2",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "rollup-plugin-peer-deps-external": "^2.2.4",
