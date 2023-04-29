@@ -1,12 +1,29 @@
 {
   "name": "@defiedge/react",
-  "version": "1.0.0",
-  "license": "MIT",
+  "version": "0.0.1",
   "module": "./build/index.es.js",
   "types": "./build/index.d.ts",
-  "files": [
-    "build"
+  "files": ["build"],
+  "description": "React component for defiedge",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unbound-finance/defiedge-react-sdk.git"
+  },
+  "keywords": [
+    "defiedge",
+    "react",
+    "widget"
   ],
+  "author": "Defiedge <hello@defiedge.io>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/unbound-finance/defiedge-react-sdk/issues"
+  },
+  "homepage": "https://github.com/unbound-finance/defiedge-react-sdk#readme",
   "scripts": {
     "start:storybook": "start-storybook -p 5000",
     "build:tailwind": "postcss src/css/index.src.css -o src/css/index.css",
@@ -14,9 +31,14 @@
     "watch:rollup": "rollup -c rollup.config.js --watch",
     "storybook": "yarn build:tailwind && run-p watch:tailwind start:storybook",
     "dev": "run-p watch:tailwind watch:rollup",
-    "build": "export NODE_ENV=production && rollup -c rollup.config.js",
+    "build": "rollup -c rollup.config.js",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+
+    "coverage": "jest --runInBand",
+    "postversion": "git push && git push --tags",
+    "prepublishOnly": "yarn build",
+    "version": " git add -A src"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
