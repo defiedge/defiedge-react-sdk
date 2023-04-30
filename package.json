@@ -1,6 +1,6 @@
 {
   "name": "@defiedge/react",
-  "version": "0.0.2-a",
+  "version": "0.0.2-b",
   "module": "./build/index.es.js",
   "types": "./build/index.d.ts",
   "files": [
