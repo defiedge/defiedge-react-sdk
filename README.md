@@ -2,9 +2,9 @@
 
 # @defiedge/react
 
-[![License: MIT](https://img.shields.io/github/license/unbound-finance/defiedge-react-sdk.svg)](https://opensource.org/licenses/MIT) ![minified gzipped size](https://badgen.net/bundlephobia/minzip/@defiedge/react@0.0.1/) <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/unbound-finance/defiedge-react-sdk.svg">
+[![License: MIT](https://img.shields.io/github/license/unbound-finance/defiedge-react-sdk.svg)](https://opensource.org/licenses/MIT) ![minified gzipped size](https://badgen.net/bundlephobia/minzip/@defiedge/react@0.0.2-a/) <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/unbound-finance/defiedge-react-sdk.svg">
 
-@defiedge/react is a library that allows developers to integrate with the DefiEdge protocol in their React applications. It provides a set of React components that make it easy to interact with the DefiEdge API.
+`@defiedge/react` is a library that allows developers to integrate with the __DefiEdge__ protocol in their React applications. It provides a set of React components that make it easy to interact with the DefiEdge API.
 
 ## Getting Started
 
@@ -26,14 +26,14 @@ import { LiquidityCard, DefiedgeProvider } from '@defiedge/react'
 
 ## Components
 
-@defiedge/react provides the following components:
+`@defiedge/react` provides the following components:
 
 ### `<DefiedgeProvider>`
 
 The `<DefiedgeProvider>` component sets up the context for the @defiedge/react. It takes a `children` prop that should be a React component or a tree of components that will have access to the context.
 
 ```tsx
-import { DefiedgeProvider } from '@defiedge/react-sdk'
+import { DefiedgeProvider } from '@defiedge/react'
 
 function App() {
   return (
@@ -46,13 +46,16 @@ function App() {
 
 ### `<LiquidityCard>`
 
-The `<LiquidityCard>` component provides a button that allows users to connect their wallet to the DefiEdge protocol. It takes an `strategyAddress` and `network`  prop that with show stats and functionality for that strategy.
+The `<LiquidityCard>` component provides a button that allows users to connect their wallet to the DefiEdge protocol. It takes an `strategyAddress` and `network` prop that with show stats and functionality for that strategy.
 
-```jsx
+```tsx
 import { LiquidityCard, SupportedChainId } from '@defiedge/react'
 
 function MyComponent() {
-  return <LiquidityCard address={strategyAddress} network={SupportedChainId.mainnet} />
+  const strategyAddress: string = '0xc3ad...72bf9eb'
+  const network: SupportedChainId = SupportedChainId.bsc
+
+  return <LiquidityCard address={strategyAddress} network={network} />
 }
 ```
 
@@ -60,11 +63,11 @@ function MyComponent() {
 
 ```ts
 enum SupportedChainId {
-    arbitrum = 42161,
-    mainnet = 1,
-    optimism = 10,
-    polygon = 137,
-    bsc = 56
+  arbitrum = 42161,
+  mainnet = 1,
+  optimism = 10,
+  polygon = 137,
+  bsc = 56
 }
 
 interface LiquidityCardProps {
@@ -76,7 +79,7 @@ interface LiquidityCardProps {
 
 ## Contributing
 
-If you'd like to contribute to @defiedge/react, please create a pull request on GitHub.
+If you'd like to contribute to `@defiedge/react`, please create a pull request on GitHub.
 
 
 ## License
