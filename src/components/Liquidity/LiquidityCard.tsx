@@ -109,6 +109,8 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   const [withdrawLoading, setWithdrawLoading] = useState<boolean>(false);
   const [approve0Loading, setApprove0Loading] = useState<boolean>(false);
   const [approve1Loading, setApprove1Loading] = useState<boolean>(false);
+  const [token0Max, setToken0Max] = useState<boolean>(false);
+  const [token1Max, setToken1Max] = useState<boolean>(false);
 
   useEffect(() => {
     if (!strategyAddress) return;
@@ -302,6 +304,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
         strategy?.token0.decimals
       );
       setAmount0(value);
+      setToken0Max(true);
 
       if (liquidityRatio && depositType === "BOTH") {
         setAmount1((Number(value) * liquidityRatio).toString());
@@ -317,6 +320,8 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
       );
 
       setAmount1(value);
+      setToken1Max(true);
+
       if (liquidityRatio && depositType === "BOTH") {
         setAmount0((Number(value) / liquidityRatio).toString());
       }
@@ -398,8 +403,8 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
     depositLP(
       address,
-      amount0 ?? "0",
-      amount1 ?? "0",
+      (token0Max ? token0Balance?.value ?? amount0 : amount0) ?? "0",
+      (token1Max ? token1Balance?.value ?? amount1 : amount1) ?? "0",
       strategyAddress,
       provider
     )
@@ -421,6 +426,10 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   }, [
     address,
     amount0,
+    token0Max,
+    token1Max,
+    token0Balance?.value,
+    token1Balance?.value,
     amount1,
     provider,
     refetchBalance0,
@@ -657,7 +666,12 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                     type="number"
                                     className="pt-4 pb-2 pl-2 pr-6 text-zinc-800 font-mono text-4xl focus:outline-none flex-1 w-full bg-transparent"
                                     placeholder="0.00"
-                                    onChange={(e) => handleAmount0Change(e)}
+                                    onInput={() => {
+                                      setToken0Max(false);
+                                    }}
+                                    onChange={(e) => {
+                                      handleAmount0Change(e);
+                                    }}
                                   />
                                   <div className="pt-4 flex flex-col items-end space-y-2">
                                     <div className="py-0.5 rounded-full bg-zinc-200 text-zinc-800 font-medium w-[64px] flex items-center justify-center">
@@ -681,6 +695,9 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                     type="number"
                                     className="pt-4 pb-2 pl-2 pr-6 text-zinc-800 font-mono text-4xl focus:outline-none flex-1 w-full bg-transparent"
                                     placeholder="0.00"
+                                    onInput={() => {
+                                      setToken1Max(false);
+                                    }}
                                     onChange={(e) => handleAmount1Change(e)}
                                   />
                                   <div className="pt-4 flex flex-col items-end space-y-2">
@@ -706,11 +723,11 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                   ? amount0
                                   : amount1
                               }
-                              setAmount={
+                              setAmount={(amount) => {
                                 singleSideTokenType === SingleSideTokenType.ZERO
-                                  ? setAmount0
-                                  : setAmount1
-                              }
+                                  ? (setAmount0(amount), setToken0Max(false))
+                                  : (setAmount1(amount), setToken1Max(false));
+                              }}
                               balance={
                                 singleSideTokenType === SingleSideTokenType.ZERO
                                   ? token0Balance?.formatted
@@ -732,11 +749,11 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                               ? amount0
                               : amount1
                           }
-                          setAmount={
+                          setAmount={(amount) => {
                             singleSideTokenType === SingleSideTokenType.ZERO
-                              ? setAmount0
-                              : setAmount1
-                          }
+                              ? (setAmount0(amount), setToken0Max(false))
+                              : (setAmount1(amount), setToken1Max(false));
+                          }}
                           balance={
                             singleSideTokenType === SingleSideTokenType.ZERO
                               ? token0Balance?.formatted
