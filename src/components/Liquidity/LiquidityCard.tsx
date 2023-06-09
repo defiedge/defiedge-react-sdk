@@ -255,26 +255,23 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   }, [userShare]);
 
   const fetchUserShares = useCallback(() => {
-    console.log({ address, provider });
     if (!address || !provider) return;
 
     getUserDeshareBalance(address, strategyAddress, provider, true)
       .then((data) => {
         setUserShare(data);
-        console.log({ data, strategyToken });
 
-        if (strategyToken) {
+        if (strategyToken?.totalSupply) {
           const fraction =
             Number(formatEther(data)) /
             Number(strategyToken.totalSupply.formatted);
+          console.log({ fraction, data, strategyToken });
 
           setUserShareFraction(fraction);
         }
       })
-      .catch((e) => {
-        console.error(e);
-      });
-  }, [address, provider, strategyAddress, strategyToken]);
+      .catch(console.warn);
+  }, [address, provider, strategyAddress, strategyToken?.totalSupply]);
 
   const fetchLiquidity = useCallback(() => {
     if (!provider) return;
@@ -286,22 +283,14 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
         setStrategyAmount0(data.amount0Total);
         setStrategyAmount1(data.amount1Total);
       })
-      .catch((e) => {
-        console.error(e);
-      });
-  }, [network, strategyAddress]);
+      .catch(console.warn);
+  }, [provider, strategyAddress]);
 
   useEffect(() => {
     fetchAllowances();
     fetchUserShares();
     fetchLiquidity();
-  }, [
-    fetchAllowances,
-    fetchUserShares,
-    fetchLiquidity,
-    network,
-    strategyAddress,
-  ]);
+  }, [fetchAllowances, fetchUserShares, fetchLiquidity]);
 
   const handleToken0Max = useCallback(() => {
     if (token0Balance && strategy?.token0) {
