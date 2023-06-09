@@ -247,7 +247,9 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   ]);
 
   useEffect(() => {
-    if (!userShare) {
+    if (!userShare) return;
+
+    if (!+(userShare.toString() ?? 0)) {
       setWithdrawError(`No Shares to Remove`);
     } else {
       setWithdrawError(null);
