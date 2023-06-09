@@ -69,9 +69,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   const [isToken1Approved, setIsToken1Approved] = useState<boolean>(false);
   const [liquidityRatio, setLiquidityRatio] = useState<number>(0);
   const [userShare, setUserShare] = useState<BigNumber | undefined>();
-  const [userShareFraction, setUserShareFraction] = useState<BigNumber>(
-    BigNumber.from(0)
-  );
+  const [userShareFraction, setUserShareFraction] = useState<number>(0);
   const [strategyAmount0, setStrategyAmount0] = useState<number>(0);
   const [strategyAmount1, setStrategyAmount1] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -266,8 +264,9 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
         console.log({ data, strategyToken });
 
         if (strategyToken) {
-          const fraction = data.div(strategyToken.totalSupply.value);
-          console.log({ fraction });
+          const fraction =
+            Number(formatEther(data)) /
+            Number(strategyToken.totalSupply.formatted);
 
           setUserShareFraction(fraction);
         }
@@ -885,7 +884,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                               parseFloat(
                                 (
                                   strategyAmount0 *
-                                  +formatEther(userShareFraction) *
+                                  +userShareFraction *
                                   (Number(removePercentage) / 100)
                                 ).toFixed(4)
                               )}
@@ -900,7 +899,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                               parseFloat(
                                 (
                                   strategyAmount1 *
-                                  +formatEther(userShareFraction) *
+                                  userShareFraction *
                                   (Number(removePercentage) / 100)
                                 ).toFixed(4)
                               )}
