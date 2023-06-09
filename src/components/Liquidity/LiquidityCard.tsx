@@ -263,7 +263,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
     getUserDeshareBalance(address, strategyAddress, provider, true)
       .then((data) => {
         setUserShare(data);
-        console.log({ data });
+        console.log({ data, strategyToken });
 
         if (strategyToken) {
           const fraction = data.div(strategyToken.totalSupply.value);
@@ -873,7 +873,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                           <span className="text-zinc-500">Your Share</span>
                           <span className="font-medium">
                             {userShare &&
-                              parseFloat(Number(userShare).toFixed(4))}
+                              +parseFloat(formatEther(userShare)).toFixed(4)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
