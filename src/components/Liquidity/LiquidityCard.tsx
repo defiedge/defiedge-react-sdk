@@ -265,7 +265,6 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
           const fraction =
             Number(formatEther(data)) /
             Number(strategyToken.totalSupply.formatted);
-          console.log({ fraction, data, strategyToken });
 
           setUserShareFraction(fraction);
         }
@@ -278,8 +277,6 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
     getLiquidity(strategyAddress, provider)
       .then((data) => {
-        console.log({ data });
-
         setStrategyAmount0(data.amount0Total);
         setStrategyAmount1(data.amount1Total);
       })
@@ -440,7 +437,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
       userShare.mul(BigNumber.from(removePercentage).div(BigNumber.from(100)))
     );
 
-    console.log(sharesToRemove);
+    console.log(userShare, sharesToRemove);
 
     removeLP(address, sharesToRemove, strategyAddress, provider)
       .then((data) => {
