@@ -680,11 +680,14 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                   </div>
                                 </div>
                                 {token0Balance && (
-                                  <span
-                                    className="text-zinc-500 text-sm px-2 hover:underline hover:cursor-pointer"
-                                    onClick={handleToken0Max}
-                                  >
-                                    Balance: {token0Balance?.formatted ?? "0"}
+                                  <span className="text-zinc-500 text-sm px-2">
+                                    Balance: {token0Balance?.formatted ?? "0"}{" "}
+                                    <button
+                                      onClick={handleToken0Max}
+                                      className="hover:underline hover:cursor-pointer"
+                                    >
+                                      Max
+                                    </button>
                                   </span>
                                 )}
                               </div>
@@ -707,11 +710,14 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                   </div>
                                 </div>
                                 {token1Balance && (
-                                  <span
-                                    className="text-zinc-500 text-sm px-2 hover:underline hover:cursor-pointer"
-                                    onClick={handleToken1Max}
-                                  >
-                                    Balance: {token1Balance?.formatted ?? "0"}
+                                  <span className="text-zinc-500 text-sm px-2 hover:underline hover:cursor-pointer">
+                                    Balance: {token1Balance?.formatted ?? "0"}{" "}
+                                    <button
+                                      onClick={handleToken1Max}
+                                      className="hover:underline hover:cursor-pointer"
+                                    >
+                                      Max
+                                    </button>
                                   </span>
                                 )}
                               </div>

@@ -52,9 +52,12 @@ const SingleInput: FC<SingleInputProps> = ({
           </div>
         </div>
         {balance && (
-          <span className="text-zinc-500 text-sm px-2 hover:underline hover:cursor-pointer">
+          <span className="text-zinc-500 text-sm px-2">
             Balance: {balance}{" "}
-            <button onClick={handleTokenMax} className="underline">
+            <button
+              onClick={handleTokenMax}
+              className="hover:underline hover:cursor-pointer"
+            >
               Max
             </button>
           </span>
