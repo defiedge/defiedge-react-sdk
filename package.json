@@ -1,6 +1,6 @@
 {
   "name": "@defiedge/react",
-  "version": "0.0.3-j",
+  "version": "0.0.3-k",
   "module": "./build/index.es.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -88,7 +88,7 @@
     "react-dom": ">=16.8"
   },
   "dependencies": {
-    "@defiedge/sdk": "^0.0.5-a",
+    "@defiedge/sdk": "^0.0.5-b",
     "@headlessui/react": "^1.7.14",
     "autoprefixer": "^10.4.14",
     "connectkit": "^1.2.3",

@@ -434,9 +434,9 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
     setWithdrawLoading(true);
 
-    const sharesToRemove = (+formatEther(
-      userShare.mul(BigNumber.from(removePercentage).div(BigNumber.from(100)))
-    )).toFixed(18);
+    const sharesToRemove = userShare.mul(
+      BigNumber.from(removePercentage).div(BigNumber.from(100))
+    );
 
     removeLP(address, sharesToRemove, strategyAddress, provider)
       .then((data) => {
