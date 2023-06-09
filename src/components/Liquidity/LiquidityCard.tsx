@@ -281,6 +281,8 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
     getLiquidity(strategyAddress, provider)
       .then((data) => {
+        console.log({ data });
+
         setStrategyAmount0(data.amount0Total);
         setStrategyAmount1(data.amount1Total);
       })
