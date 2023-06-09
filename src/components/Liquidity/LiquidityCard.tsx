@@ -26,12 +26,13 @@ import {
   useSigner,
   useToken,
 } from "wagmi";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import clsx from "clsx";
 import Wallet from "../Wallet";
 import SingleInput from "../Common/SingleInput";
 import { useIsMounted } from "connectkit";
 import "../../css/index.css";
+import { formatEther } from "ethers/lib/utils.js";
 
 interface LiquidityCardProps {
   strategyAddress: string;
@@ -67,8 +68,10 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   const [isToken0Approved, setIsToken0Approved] = useState<boolean>(false);
   const [isToken1Approved, setIsToken1Approved] = useState<boolean>(false);
   const [liquidityRatio, setLiquidityRatio] = useState<number>(0);
-  const [userShare, setUserShare] = useState<string | undefined>();
-  const [userShareFraction, setUserShareFraction] = useState<number>(0);
+  const [userShare, setUserShare] = useState<BigNumber | undefined>();
+  const [userShareFraction, setUserShareFraction] = useState<BigNumber>(
+    BigNumber.from(0)
+  );
   const [strategyAmount0, setStrategyAmount0] = useState<number>(0);
   const [strategyAmount1, setStrategyAmount1] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -246,7 +249,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   ]);
 
   useEffect(() => {
-    if (!Number(userShare)) {
+    if (!userShare) {
       setWithdrawError(`No Shares to Remove`);
     } else {
       setWithdrawError(null);
@@ -254,15 +257,17 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   }, [userShare]);
 
   const fetchUserShares = useCallback(() => {
+    console.log({ address, provider });
     if (!address || !provider) return;
 
-    getUserDeshareBalance(address, strategyAddress, provider)
+    getUserDeshareBalance(address, strategyAddress, provider, true)
       .then((data) => {
         setUserShare(data);
+        console.log({ data });
 
         if (strategyToken) {
-          const fraction =
-            Number(data) / Number(strategyToken.totalSupply.formatted);
+          const fraction = data.div(strategyToken.totalSupply.value);
+          console.log({ fraction });
 
           setUserShareFraction(fraction);
         }
@@ -441,8 +446,11 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
     if (!address || !provider || !userShare) return;
 
     setWithdrawLoading(true);
+    const sharesToRemove = formatEther(
+      userShare.mul(BigNumber.from(removePercentage).div(BigNumber.from(100)))
+    );
 
-    const sharesToRemove = Number(userShare) * (Number(removePercentage) / 100);
+    console.log(sharesToRemove);
 
     removeLP(address, sharesToRemove, strategyAddress, provider)
       .then((data) => {
@@ -567,6 +575,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
               <Tab.Group>
                 <Tab.List className="flex space-x-1 rounded-xl bg-zinc-100 p-1">
                   <Tab
+                    key="deposit"
                     className={({ selected }) =>
                       clsx(
                         "w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-zinc-700 focus:outline-none",
@@ -584,6 +593,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                     Deposit
                   </Tab>
                   <Tab
+                    key="remove"
                     className={({ selected }) =>
                       clsx(
                         "w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-zinc-700 focus:outline-none",
@@ -601,7 +611,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                   </Tab>
                 </Tab.List>
                 <Tab.Panels>
-                  <Tab.Panel>
+                  <Tab.Panel key="deposit">
                     <div className="px-1 mt-2">
                       {liquidityRatio ? (
                         <div className="space-y-2">
@@ -817,7 +827,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                       </div>
                     </div>
                   </Tab.Panel>
-                  <Tab.Panel>
+                  <Tab.Panel key="remove">
                     <div className="px-1 mt-2">
                       <div className="flex items-center justify-between mt-4">
                         <span className="text-4xl text-zinc-800 font-medium">
@@ -871,11 +881,11 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                             {strategy.token0.symbol}
                           </span>
                           <span className="font-medium">
-                            {strategy.amount0 &&
+                            {strategyAmount0 &&
                               parseFloat(
                                 (
                                   strategyAmount0 *
-                                  userShareFraction *
+                                  +formatEther(userShareFraction) *
                                   (Number(removePercentage) / 100)
                                 ).toFixed(4)
                               )}
@@ -886,11 +896,11 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                             {strategy.token1.symbol}
                           </span>
                           <span className="font-medium">
-                            {strategy.amount1 &&
+                            {strategyAmount1 &&
                               parseFloat(
                                 (
                                   strategyAmount1 *
-                                  userShareFraction *
+                                  +formatEther(userShareFraction) *
                                   (Number(removePercentage) / 100)
                                 ).toFixed(4)
                               )}
