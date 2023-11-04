@@ -1,12 +1,21 @@
 import { WagmiConfig, createClient } from "wagmi";
-import { mainnet, bsc, polygon, arbitrum, optimism } from "wagmi/chains";
+import {
+  arbitrum,
+  base,
+  bsc,
+  mainnet,
+  moonbeam,
+  optimism,
+  mantle,
+  polygon,
+} from "chains";
 import { ConnectKitProvider, getDefaultClient } from "connectkit";
 import React, { FC, ReactNode } from "react";
 
 const client = createClient(
   getDefaultClient({
     appName: "@defiedge/react",
-    chains: [mainnet, bsc, polygon, arbitrum, optimism],
+    chains: [arbitrum, base, bsc, mainnet, moonbeam, optimism, mantle, polygon],
   })
 );
 
