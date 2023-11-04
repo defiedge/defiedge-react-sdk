@@ -1198,10 +1198,10 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@defiedge/sdk@^0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@defiedge/sdk/-/sdk-0.0.7.tgz#698152d503f74e3d9ac52fe6372e6df5342926f7"
-  integrity sha512-dkH0Vd+UhNgwZuC9xGdMU/wOjO1hd4iB6cz2x38KG3hFC4g5XRXOvGTYxBkrCF8QMhnq6fLvlyXpIvcQcrZpMA==
+"@defiedge/sdk@^0.0.8":
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/@defiedge/sdk/-/sdk-0.0.8.tgz#257b4b8e8a1ed33f37411adeb59d2fc3e4d8d54b"
+  integrity sha512-IHbc7ZGFUhJUdH4BIFVrg60f3ymDj+ij7HKN3ugAElefWrncF8nMKFhGP2QAEVeU9s4A6K54yXNnFWU+BkJfLQ==
   dependencies:
     "@ethersproject/abstract-signer" "^5.6.2"
     "@ethersproject/address" "^5.6.0"
@@ -1221,7 +1221,7 @@
     ethereumjs-util "^7.1.4"
     ethers "^5.6.8"
     global "^4.4.0"
-    graphql "^16.6.0"
+    graphql "16.6.0"
     graphql-request "^6.0.0"
     jsbi "^3.1.5"
     typechain "^8.0.0"
@@ -9066,7 +9066,7 @@ graphql-request@^6.0.0:
     "@graphql-typed-document-node/core" "^3.2.0"
     cross-fetch "^3.1.5"
 
-graphql@^16.6.0:
+graphql@16.6.0:
   version "16.6.0"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.6.0.tgz#c2dcffa4649db149f6282af726c8c83f1c7c5fdb"
   integrity sha512-KPIBPDlW7NxrbT/eh4qPXz5FiFdL5UbaA0XUNz2Rp3Z3hqBSkbj0GVjwFDztsWVauZUWsbKHgMg++sk8UX0bkw==
