@@ -1198,10 +1198,10 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@defiedge/sdk@^0.0.8":
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/@defiedge/sdk/-/sdk-0.0.8.tgz#257b4b8e8a1ed33f37411adeb59d2fc3e4d8d54b"
-  integrity sha512-IHbc7ZGFUhJUdH4BIFVrg60f3ymDj+ij7HKN3ugAElefWrncF8nMKFhGP2QAEVeU9s4A6K54yXNnFWU+BkJfLQ==
+"@defiedge/sdk@^0.0.8-a":
+  version "0.0.8-a"
+  resolved "https://registry.yarnpkg.com/@defiedge/sdk/-/sdk-0.0.8-a.tgz#2258c46f17ca35624e146f9bbdf091cf39e1614a"
+  integrity sha512-3+pI3znwjmhRDp6ZBHpWqAihF0/3QVWsBeK5TllVTs3ds2ZNpGH7QaMR22cxk/SErdFNJDZyBrzDAUTxU9Aj8g==
   dependencies:
     "@ethersproject/abstract-signer" "^5.6.2"
     "@ethersproject/address" "^5.6.0"

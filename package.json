@@ -88,7 +88,7 @@
     "react-dom": ">=16.8"
   },
   "dependencies": {
-    "@defiedge/sdk": "^0.0.8",
+    "@defiedge/sdk": "^0.0.8-a",
     "@headlessui/react": "^1.7.14",
     "autoprefixer": "^10.4.14",
     "chains": "npm:@wagmi/chains@^1.8.0",
