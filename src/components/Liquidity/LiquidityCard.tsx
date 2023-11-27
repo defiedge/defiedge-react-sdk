@@ -1,23 +1,5 @@
-import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { Tab } from "@headlessui/react";
-import {
-  getStrategyInfo,
-  getLiquidityRatio,
-  isStrategyTokenApproved,
-  getStrategyMetaData,
-  approveStrategyToken,
-  getUserDeshareBalance,
-  depositLP,
-  removeLP,
-  getRanges,
-  getLiquidity,
-} from "@defiedge/sdk";
-import { SupportedChainId } from "@defiedge/sdk/dist/src/types";
-import {
-  Strategy,
-  Token,
-} from "@defiedge/sdk/dist/src/types/strategyQueryData";
-import { Strategy as MetadataStrategy } from "@defiedge/sdk/dist/src/types/strategyMetaQuery";
+import "../../css/index.css";
+
 import {
   Address,
   useAccount,
@@ -27,17 +9,37 @@ import {
   useToken,
 } from "wagmi";
 import { BigNumber, ethers } from "ethers";
-import clsx from "clsx";
-import Wallet from "../Wallet";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import type {
+  Strategy,
+  Token,
+} from "@defiedge/sdk/dist/src/types/strategyQueryData";
+import {
+  approveStrategyToken,
+  depositLP,
+  getLiquidity,
+  getLiquidityRatio,
+  getRanges,
+  getStrategyInfo,
+  getStrategyMetaData,
+  getUserDeshareBalance,
+  isStrategyTokenApproved,
+  removeLP,
+} from "@defiedge/sdk";
+
+import type { Strategy as MetadataStrategy } from "@defiedge/sdk/dist/src/types/strategyMetaQuery";
 import SingleInput from "../Common/SingleInput";
+import { SupportedChainId } from "@defiedge/sdk/dist/src/types";
+import { Tab } from "@headlessui/react";
+import Wallet from "../Wallet";
+import clsx from "clsx";
+import { formatEther, isAddress } from "ethers/lib/utils.js";
 import { useIsMounted } from "connectkit";
-import "../../css/index.css";
-import { formatEther } from "ethers/lib/utils.js";
 
 interface LiquidityCardProps {
-  strategyAddress: string;
-  network: SupportedChainId;
   color?: string;
+  network: SupportedChainId;
+  strategyAddress: string;
 }
 
 type DepositType = "BOTH" | "SINGLE";
@@ -48,9 +50,9 @@ enum SingleSideTokenType {
 }
 
 const LiquidityCard: FC<LiquidityCardProps> = ({
-  strategyAddress,
-  network,
   color = "#2463EB",
+  network,
+  strategyAddress,
 }) => {
   strategyAddress = strategyAddress?.toLowerCase();
 
