@@ -37,6 +37,7 @@ import { formatEther, isAddress } from "ethers/lib/utils.js";
 import { useIsMounted } from "connectkit";
 
 interface LiquidityCardProps {
+  allowedTokenForSingleSide?: string;
   color?: string;
   network: SupportedChainId;
   strategyAddress: string;
@@ -50,6 +51,7 @@ enum SingleSideTokenType {
 }
 
 const LiquidityCard: FC<LiquidityCardProps> = ({
+  allowedTokenForSingleSide,
   color = "#2463EB",
   network,
   strategyAddress,
@@ -84,6 +86,22 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
       }
     | undefined
   >();
+  const [allowedToken0, allowedToken1] = useMemo(() => {
+    if (!allowedTokenForSingleSide || !strategy) return [true, true];
+
+    const allowedToken0 =
+      allowedTokenForSingleSide.toLowerCase() ===
+      (isAddress(allowedTokenForSingleSide)
+        ? strategy.token0.id.toLowerCase()
+        : strategy.token0.symbol.toLowerCase());
+
+    const allowedToken1 =
+      allowedTokenForSingleSide.toLowerCase() ===
+      (isAddress(allowedTokenForSingleSide)
+        ? strategy.token1.id.toLowerCase()
+        : strategy.token1.symbol.toLowerCase());
+    return [allowedToken0, allowedToken1];
+  }, [allowedTokenForSingleSide, strategy]);
 
   const [amount0, setAmount0] = useState<string>("");
   const [amount1, setAmount1] = useState<string>("");
@@ -91,7 +109,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
   const [depositType, setDepositType] = useState<DepositType>("BOTH");
   const [singleSideToken, setSingleSideToken] = useState<Token | undefined>(
-    strategy?.token0
+    allowedToken0 ? strategy?.token0 : strategy?.token1
   );
   const [depositError, setDepositError] = useState<string | null>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
@@ -124,14 +142,21 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
     ])
       .then(([info, metadata]) => {
         setStrategy({ ...info, ...metadata });
-        setSingleSideToken(info.token0);
+
+        const allowedToken0 =
+          !allowedTokenForSingleSide ||
+          allowedTokenForSingleSide.toLowerCase() ===
+            (isAddress(allowedTokenForSingleSide)
+              ? info.token0.id.toLowerCase()
+              : info.token0.symbol.toLowerCase());
+        setSingleSideToken(allowedToken0 ? info.token0 : info.token1);
         setRangeToken(info.token0);
       })
       .catch((e) => {
         console.error(e);
       })
       .finally(() => setLoading(false));
-  }, [network, strategyAddress]);
+  }, [network, allowedTokenForSingleSide, strategyAddress]);
 
   useEffect(() => {
     if (!provider) return;
@@ -628,32 +653,36 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                             </div>
                             {depositType === "SINGLE" && (
                               <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
-                                <button
-                                  className={clsx(
-                                    "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                                    singleSideToken?.symbol ===
-                                      strategy.token0.symbol && " bg-white"
-                                  )}
-                                  onClick={() => {
-                                    setAmount0("");
-                                    setSingleSideToken(strategy.token0);
-                                  }}
-                                >
-                                  {strategy.token0.symbol}
-                                </button>
-                                <button
-                                  className={clsx(
-                                    "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                                    singleSideToken?.symbol ===
-                                      strategy.token1.symbol && "bg-white"
-                                  )}
-                                  onClick={() => {
-                                    setAmount1("");
-                                    setSingleSideToken(strategy.token1);
-                                  }}
-                                >
-                                  {strategy.token1.symbol}
-                                </button>
+                                {allowedToken0 ? (
+                                  <button
+                                    className={clsx(
+                                      "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                      singleSideToken?.symbol ===
+                                        strategy.token0.symbol && " bg-white"
+                                    )}
+                                    onClick={() => {
+                                      setAmount0("");
+                                      setSingleSideToken(strategy.token0);
+                                    }}
+                                  >
+                                    {strategy.token0.symbol}
+                                  </button>
+                                ) : null}
+                                {allowedToken1 ? (
+                                  <button
+                                    className={clsx(
+                                      "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                      singleSideToken?.symbol ===
+                                        strategy.token1.symbol && "bg-white"
+                                    )}
+                                    onClick={() => {
+                                      setAmount1("");
+                                      setSingleSideToken(strategy.token1);
+                                    }}
+                                  >
+                                    {strategy.token1.symbol}
+                                  </button>
+                                ) : null}
                               </div>
                             )}
                           </div>
