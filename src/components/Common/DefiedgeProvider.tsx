@@ -2,16 +2,15 @@ import { WagmiConfig, createClient } from "wagmi";
 import {
   arbitrum,
   avalanche,
-  base,
   bsc,
   mainnet,
-  mantle,
+  // mantle,
   moonbeam,
   optimism,
   polygon,
   polygonZkEvm,
   zkSync,
-} from "chains";
+} from "wagmi/chains";
 import { ConnectKitProvider, getDefaultClient } from "connectkit";
 import React, { FC, ReactNode } from "react";
 
@@ -21,13 +20,15 @@ const client = createClient(
     chains: [
       arbitrum,
       avalanche,
-      base,
+      // base,
       bsc,
       mainnet,
-      mantle,
+      // mantle,
       moonbeam,
       optimism,
       polygon,
+      // xlayer,
+      // linea,
       polygonZkEvm,
       zkSync,
     ],

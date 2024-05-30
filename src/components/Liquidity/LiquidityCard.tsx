@@ -1,40 +1,48 @@
 import "../../css/index.css";
 
 import {
-  Address,
-  useAccount,
-  useBalance,
-  useNetwork,
-  useSigner,
-  useToken,
+ Address,
+ useAccount,
+ useBalance,
+ useNetwork,
+ useSigner,
+ useToken,
 } from "wagmi";
-import { BigNumber, ethers } from "ethers";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import {BigNumber,ethers } from "ethers";
+import {
+ FC,
+ useCallback,
+ useEffect,
+ useMemo,
+ useState,
+} from "react";
 import type {
-  Strategy,
-  Token,
+ Strategy,
+ Token,
 } from "@defiedge/sdk/dist/src/types/strategyQueryData";
 import {
-  approveStrategyToken,
-  depositLP,
-  getLiquidity,
-  getLiquidityRatio,
-  getRanges,
-  getStrategyInfo,
-  getStrategyMetaData,
-  getUserDeshareBalance,
-  isStrategyTokenApproved,
-  removeLP,
+ approveStrategyToken,
+ depositLP,
+ getLiquidity,
+ getLiquidityRatio,
+ getRanges,
+ getSSDStrategies,
+ getStrategyInfo,
+ getStrategyMetaData,
+ getUserDeshareBalance,
+ isStrategyTokenApproved,
+ removeLP,
 } from "@defiedge/sdk";
+import {formatEther,isAddress } from "ethers/lib/utils.js";
 
-import type { Strategy as MetadataStrategy } from "@defiedge/sdk/dist/src/types/strategyMetaQuery";
+import type {Strategy as MetadataStrategy } from "@defiedge/sdk/dist/src/types/strategyMetaQuery";
 import SingleInput from "../Common/SingleInput";
-import { SupportedChainId } from "@defiedge/sdk/dist/src/types";
-import { Tab } from "@headlessui/react";
+import {SupportedChainId } from "@defiedge/sdk/dist/src/types";
+import {Tab } from "@headlessui/react";
 import Wallet from "../Wallet";
 import clsx from "clsx";
-import { formatEther, isAddress } from "ethers/lib/utils.js";
-import { useIsMounted } from "connectkit";
+import {useIsMounted } from "connectkit";
+import {useSSW } from "../../hooks";
 
 interface LiquidityCardProps {
   allowedTokenForSingleSide?: string;
@@ -65,9 +73,8 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   const { data: signer } = useSigner();
   const provider = signer?.provider as ethers.providers.JsonRpcProvider;
 
-  const [strategy, setStrategy] = useState<
-    (Strategy & MetadataStrategy) | null
-  >(null);
+  const [strategy, setStrategy] =
+    useState<(Strategy & MetadataStrategy) | null>(null);
 
   const [isToken0Approved, setIsToken0Approved] = useState<boolean>(false);
   const [isToken1Approved, setIsToken1Approved] = useState<boolean>(false);
@@ -77,15 +84,23 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   const [strategyAmount0, setStrategyAmount0] = useState<number>(0);
   const [strategyAmount1, setStrategyAmount1] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [currentRange, setCurrentRange] = useState<
-    | {
-        lowerTickInA: number;
-        upperTickInA: number;
-        lowerTickInB: number;
-        upperTickInB: number;
-      }
-    | undefined
-  >();
+  const [currentRange, setCurrentRange] =
+    useState<
+      | {
+          lowerTickInA: number;
+          upperTickInA: number;
+          lowerTickInB: number;
+          upperTickInB: number;
+        }
+      | undefined
+    >();
+
+  const {isSSWDeposit, isToken1DefaultToken,isLoading: isSSWLoading} = useSSW(
+    network,
+    strategyAddress,
+    provider
+  );
+
   const [allowedToken0, allowedToken1] = useMemo(() => {
     if (!allowedTokenForSingleSide || !strategy) return [true, true];
 
@@ -119,11 +134,19 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
   const singleSideTokenType = useMemo(
     () =>
-      singleSideToken?.symbol === strategy?.token0.symbol
+      isSSWDeposit
+        ? isToken1DefaultToken
+          ? SingleSideTokenType.ONE
+          : SingleSideTokenType.ZERO
+        : singleSideToken?.symbol === strategy?.token0.symbol
         ? SingleSideTokenType.ZERO
         : SingleSideTokenType.ONE,
     [singleSideToken?.symbol, strategy?.token0.symbol]
   );
+
+  useEffect(() => {
+    if (isSSWDeposit) setDepositType("SINGLE");
+  }, [isSSWDeposit]);
 
   // loading states
   const [depositLoading, setDepositLoading] = useState<boolean>(false);
@@ -181,11 +204,11 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
       isStrategyTokenApproved(
         address,
         0,
-        amount0 ?? 0,
+        (isSSWDeposit ? isToken1DefaultToken? amount1 :(amount0) : amount0) ?? 0,
         strategyAddress,
         provider
       ),
-      isStrategyTokenApproved(
+    isSSWDeposit? Promise.resolve(true) :  isStrategyTokenApproved(
         address,
         1,
         amount1 ?? 0,
@@ -194,8 +217,18 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
       ),
     ])
       .then(([token0, token1]) => {
-        setIsToken0Approved(token0);
-        setIsToken1Approved(token1);
+        if(isSSWDeposit){
+          if(isToken1DefaultToken){
+            setIsToken0Approved(true);
+            setIsToken1Approved(token0);
+          } else{
+            setIsToken0Approved(token0);
+            setIsToken1Approved(true);
+          }
+        }else{
+          setIsToken0Approved(token0);
+          setIsToken1Approved(token1);
+        }
       })
       .catch((e) => {
         console.error(e);
@@ -320,42 +353,42 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
   const handleToken0Max = useCallback(() => {
     if (token0Balance && strategy?.token0) {
-      const value = ethers.utils.formatUnits(
+      const bal = ethers.utils.formatUnits(
         token0Balance?.value,
         strategy?.token0.decimals
       );
-      setAmount0(value);
+      setAmount0(bal);
       setToken0Max(true);
 
       if (liquidityRatio && depositType === "BOTH") {
-        setAmount1((Number(value) * liquidityRatio).toString());
+        setAmount1((Number(bal) * liquidityRatio).toString());
       }
     }
   }, [depositType, liquidityRatio, strategy?.token0, token0Balance]);
 
   const handleToken1Max = useCallback(() => {
     if (token1Balance && strategy?.token1) {
-      const value = ethers.utils.formatUnits(
+      const bal = ethers.utils.formatUnits(
         token1Balance?.value,
         strategy?.token1.decimals
       );
 
-      setAmount1(value);
+      setAmount1(bal);
       setToken1Max(true);
 
       if (liquidityRatio && depositType === "BOTH") {
-        setAmount0((Number(value) / liquidityRatio).toString());
+        setAmount0((Number(bal) / liquidityRatio).toString());
       }
     }
   }, [depositType, liquidityRatio, strategy?.token1, token1Balance]);
 
   const handleAmount0Change = useCallback(
     (e: any) => {
-      const value = e.target.value;
+      const inputValue = e.target.value;
 
-      setAmount0(value);
+      setAmount0(inputValue);
       if (liquidityRatio && depositType === "BOTH") {
-        setAmount1((Number(value) * liquidityRatio).toString());
+        setAmount1((Number(inputValue) * liquidityRatio).toString());
       }
     },
     [depositType, liquidityRatio]
@@ -363,11 +396,11 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
   const handleAmount1Change = useCallback(
     (e: any) => {
-      const value = e.target.value;
+      const inputValue = e.target.value;
 
-      setAmount1(value);
+      setAmount1(inputValue);
       if (liquidityRatio && depositType === "BOTH") {
-        setAmount0((Number(value) / liquidityRatio).toString());
+        setAmount0((Number(inputValue) / liquidityRatio).toString());
       }
     },
     [depositType, liquidityRatio]
@@ -378,7 +411,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
     setApprove0Loading(true);
 
-    approveStrategyToken(address, 0, strategyAddress, provider)
+    approveStrategyToken(address, 0, strategyAddress, provider, amount0)
       .then((data) => {
         if (!data) return;
 
@@ -400,7 +433,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
     setApprove1Loading(true);
 
-    approveStrategyToken(address, 1, strategyAddress, provider)
+    approveStrategyToken(address, 1, strategyAddress, provider, amount1)
       .then((data) => {
         if (!data) return;
 
@@ -491,9 +524,15 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
     userShare,
   ]);
 
+  console.log({
+    isToken0Approved,
+    isToken1Approved,
+    isToken1DefaultToken,
+  });
+
   if (!isMounted) return null;
 
-  if (loading)
+  if (loading||isSSWLoading)
     return <span className="text-xs opacity-80">Loading Widget...</span>;
 
   if (!strategy) {
@@ -630,62 +669,64 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                     <div className="px-1 mt-2">
                       {liquidityRatio ? (
                         <div className="space-y-2">
-                          <div className="flex space-x-2 justify-end py-2">
-                            <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
-                              <button
-                                className={clsx(
-                                  "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                                  depositType === "BOTH" && " bg-white"
-                                )}
-                                onClick={() => setDepositType("BOTH")}
-                              >
-                                Both
-                              </button>
-                              <button
-                                className={clsx(
-                                  "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                                  depositType === "SINGLE" && "bg-white"
-                                )}
-                                onClick={() => setDepositType("SINGLE")}
-                              >
-                                Single
-                              </button>
-                            </div>
-                            {depositType === "SINGLE" && (
+                          {isSSWDeposit ? null : (
+                            <div className="flex space-x-2 justify-end py-2">
                               <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
-                                {allowedToken0 ? (
-                                  <button
-                                    className={clsx(
-                                      "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                                      singleSideToken?.symbol ===
-                                        strategy.token0.symbol && " bg-white"
-                                    )}
-                                    onClick={() => {
-                                      setAmount0("");
-                                      setSingleSideToken(strategy.token0);
-                                    }}
-                                  >
-                                    {strategy.token0.symbol}
-                                  </button>
-                                ) : null}
-                                {allowedToken1 ? (
-                                  <button
-                                    className={clsx(
-                                      "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
-                                      singleSideToken?.symbol ===
-                                        strategy.token1.symbol && "bg-white"
-                                    )}
-                                    onClick={() => {
-                                      setAmount1("");
-                                      setSingleSideToken(strategy.token1);
-                                    }}
-                                  >
-                                    {strategy.token1.symbol}
-                                  </button>
-                                ) : null}
+                                <button
+                                  className={clsx(
+                                    "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                    depositType === "BOTH" && " bg-white"
+                                  )}
+                                  onClick={() => setDepositType("BOTH")}
+                                >
+                                  Both
+                                </button>
+                                <button
+                                  className={clsx(
+                                    "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                    depositType === "SINGLE" && "bg-white"
+                                  )}
+                                  onClick={() => setDepositType("SINGLE")}
+                                >
+                                  Single
+                                </button>
                               </div>
-                            )}
-                          </div>
+                              {depositType === "SINGLE" && (
+                                <div className="flex items-center space-x-2 bg-zinc-200 rounded-md p-1">
+                                  {allowedToken0 ? (
+                                    <button
+                                      className={clsx(
+                                        "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                        singleSideToken?.symbol ===
+                                          strategy.token0.symbol && " bg-white"
+                                      )}
+                                      onClick={() => {
+                                        setAmount0("");
+                                        setSingleSideToken(strategy.token0);
+                                      }}
+                                    >
+                                      {strategy.token0.symbol}
+                                    </button>
+                                  ) : null}
+                                  {allowedToken1 ? (
+                                    <button
+                                      className={clsx(
+                                        "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
+                                        singleSideToken?.symbol ===
+                                          strategy.token1.symbol && "bg-white"
+                                      )}
+                                      onClick={() => {
+                                        setAmount1("");
+                                        setSingleSideToken(strategy.token1);
+                                      }}
+                                    >
+                                      {strategy.token1.symbol}
+                                    </button>
+                                  ) : null}
+                                </div>
+                              )}
+                            </div>
+                          )}
                           {depositType === "BOTH" ? (
                             <div className="space-y-2">
                               <div className="border border-zinc-200/50 rounded-2xl w-full p-2 flex flex-col items-end bg-zinc-50">
