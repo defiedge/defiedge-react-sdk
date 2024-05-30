@@ -1,6 +1,6 @@
 {
   "name": "@defiedge/react",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "module": "./build/index.es.js",
   "types": "./build/index.d.ts",
   "files": [
@@ -84,8 +84,8 @@
     "typescript": "5.0.4"
   },
   "peerDependencies": {
-    "react": ">=16.8",
-    "react-dom": ">=16.8"
+    "react": "18",
+    "react-dom": "18"
   },
   "dependencies": {
     "@defiedge/sdk": "^0.0.13",
@@ -94,8 +94,8 @@
     "chains": "npm:@wagmi/chains",
     "connectkit": "^1.2.3",
     "ethers": "^5",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "react": "18",
+    "react-dom": "18",
     "wagmi": "0.12.12"
   }
 }
