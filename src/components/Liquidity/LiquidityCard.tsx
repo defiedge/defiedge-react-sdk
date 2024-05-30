@@ -1,48 +1,47 @@
 import "../../css/index.css";
 
 import {
- Address,
- useAccount,
- useBalance,
- useNetwork,
- useSigner,
- useToken,
+  Address,
+  useAccount,
+  useBalance,
+  useNetwork,
+  useSigner,
+  useToken,
 } from "wagmi";
-import {BigNumber,ethers } from "ethers";
-import {
- FC,
- useCallback,
- useEffect,
- useMemo,
- useState,
+import { BigNumber, ethers } from "ethers";
+import React,{
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
 } from "react";
 import type {
- Strategy,
- Token,
+  Strategy,
+  Token,
 } from "@defiedge/sdk/dist/src/types/strategyQueryData";
 import {
- approveStrategyToken,
- depositLP,
- getLiquidity,
- getLiquidityRatio,
- getRanges,
- getSSDStrategies,
- getStrategyInfo,
- getStrategyMetaData,
- getUserDeshareBalance,
- isStrategyTokenApproved,
- removeLP,
+  approveStrategyToken,
+  depositLP,
+  getLiquidity,
+  getLiquidityRatio,
+  getRanges,
+  getSSDStrategies,
+  getStrategyInfo,
+  getStrategyMetaData,
+  getUserDeshareBalance,
+  isStrategyTokenApproved,
+  removeLP,
 } from "@defiedge/sdk";
-import {formatEther,isAddress } from "ethers/lib/utils.js";
+import { formatEther, isAddress } from "ethers/lib/utils.js";
 
-import type {Strategy as MetadataStrategy } from "@defiedge/sdk/dist/src/types/strategyMetaQuery";
+import type { Strategy as MetadataStrategy } from "@defiedge/sdk/dist/src/types/strategyMetaQuery";
 import SingleInput from "../Common/SingleInput";
-import {SupportedChainId } from "@defiedge/sdk/dist/src/types";
-import {Tab } from "@headlessui/react";
+import { SupportedChainId } from "@defiedge/sdk/dist/src/types";
+import { Tab } from "@headlessui/react";
 import Wallet from "../Wallet";
 import clsx from "clsx";
-import {useIsMounted } from "connectkit";
-import {useSSW } from "../../hooks";
+import { useIsMounted } from "connectkit";
+import { useSSW } from "../../hooks";
 
 interface LiquidityCardProps {
   allowedTokenForSingleSide?: string;
@@ -58,7 +57,7 @@ enum SingleSideTokenType {
   ONE,
 }
 
-const LiquidityCard: FC<LiquidityCardProps> = ({
+const LiquidityCard: React.FC<LiquidityCardProps> = ({
   allowedTokenForSingleSide,
   color = "#2463EB",
   network,
@@ -87,15 +86,15 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
   const [currentRange, setCurrentRange] =
     useState<
       | {
-          lowerTickInA: number;
-          upperTickInA: number;
-          lowerTickInB: number;
-          upperTickInB: number;
-        }
+        lowerTickInA: number;
+        upperTickInA: number;
+        lowerTickInB: number;
+        upperTickInB: number;
+      }
       | undefined
     >();
 
-  const {isSSWDeposit, isToken1DefaultToken,isLoading: isSSWLoading} = useSSW(
+  const { isSSWDeposit, isToken1DefaultToken, isLoading: isSSWLoading } = useSSW(
     network,
     strategyAddress,
     provider
@@ -139,8 +138,8 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
           ? SingleSideTokenType.ONE
           : SingleSideTokenType.ZERO
         : singleSideToken?.symbol === strategy?.token0.symbol
-        ? SingleSideTokenType.ZERO
-        : SingleSideTokenType.ONE,
+          ? SingleSideTokenType.ZERO
+          : SingleSideTokenType.ONE,
     [singleSideToken?.symbol, strategy?.token0.symbol]
   );
 
@@ -169,9 +168,9 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
         const allowedToken0 =
           !allowedTokenForSingleSide ||
           allowedTokenForSingleSide.toLowerCase() ===
-            (isAddress(allowedTokenForSingleSide)
-              ? info.token0.id.toLowerCase()
-              : info.token0.symbol.toLowerCase());
+          (isAddress(allowedTokenForSingleSide)
+            ? info.token0.id.toLowerCase()
+            : info.token0.symbol.toLowerCase());
         setSingleSideToken(allowedToken0 ? info.token0 : info.token1);
         setRangeToken(info.token0);
       })
@@ -204,11 +203,11 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
       isStrategyTokenApproved(
         address,
         0,
-        (isSSWDeposit ? isToken1DefaultToken? amount1 :(amount0) : amount0) ?? 0,
+        (isSSWDeposit ? isToken1DefaultToken ? amount1 : (amount0) : amount0) ?? 0,
         strategyAddress,
         provider
       ),
-    isSSWDeposit? Promise.resolve(true) :  isStrategyTokenApproved(
+      isSSWDeposit ? Promise.resolve(true) : isStrategyTokenApproved(
         address,
         1,
         amount1 ?? 0,
@@ -217,15 +216,15 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
       ),
     ])
       .then(([token0, token1]) => {
-        if(isSSWDeposit){
-          if(isToken1DefaultToken){
+        if (isSSWDeposit) {
+          if (isToken1DefaultToken) {
             setIsToken0Approved(true);
             setIsToken1Approved(token0);
-          } else{
+          } else {
             setIsToken0Approved(token0);
             setIsToken1Approved(true);
           }
-        }else{
+        } else {
           setIsToken0Approved(token0);
           setIsToken1Approved(token1);
         }
@@ -532,7 +531,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
   if (!isMounted) return null;
 
-  if (loading||isSSWLoading)
+  if (loading || isSSWLoading)
     return <span className="text-xs opacity-80">Loading Widget...</span>;
 
   if (!strategy) {
@@ -581,7 +580,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                     className={clsx(
                       "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                       rangeToken?.symbol === strategy.token0.symbol &&
-                        " bg-white"
+                      " bg-white"
                     )}
                     onClick={() => {
                       setRangeToken(strategy.token0);
@@ -593,7 +592,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                     className={clsx(
                       "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                       rangeToken?.symbol === strategy.token1.symbol &&
-                        "bg-white"
+                      "bg-white"
                     )}
                     onClick={() => {
                       setRangeToken(strategy.token1);
@@ -698,7 +697,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                       className={clsx(
                                         "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                                         singleSideToken?.symbol ===
-                                          strategy.token0.symbol && " bg-white"
+                                        strategy.token0.symbol && " bg-white"
                                       )}
                                       onClick={() => {
                                         setAmount0("");
@@ -713,7 +712,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                                       className={clsx(
                                         "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                                         singleSideToken?.symbol ===
-                                          strategy.token1.symbol && "bg-white"
+                                        strategy.token1.symbol && "bg-white"
                                       )}
                                       onClick={() => {
                                         setAmount1("");
@@ -846,7 +845,7 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
 
                       <div className="mt-4">
                         {strategy &&
-                        (!isToken0Approved || !isToken1Approved) ? (
+                          (!isToken0Approved || !isToken1Approved) ? (
                           <div className={`flex items-center space-x-2`}>
                             {!isToken0Approved && (
                               <button
@@ -880,8 +879,8 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                             {depositError
                               ? depositError
                               : depositLoading
-                              ? "Depositing..."
-                              : "Deposit"}
+                                ? "Depositing..."
+                                : "Deposit"}
                           </button>
                         )}
                       </div>
@@ -976,8 +975,8 @@ const LiquidityCard: FC<LiquidityCardProps> = ({
                         {withdrawError
                           ? withdrawError
                           : withdrawLoading
-                          ? "Withdrawing..."
-                          : "Withdraw"}
+                            ? "Withdrawing..."
+                            : "Withdraw"}
                       </button>
                     </div>
                   </Tab.Panel>

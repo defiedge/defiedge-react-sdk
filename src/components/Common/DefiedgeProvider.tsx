@@ -39,7 +39,7 @@ interface DefiedgeProviderProps {
   children: ReactNode;
 }
 
-const DefiedgeProvider: FC<DefiedgeProviderProps> = ({ children }) => {
+const DefiedgeProvider: React.FC<DefiedgeProviderProps> = ({ children }) => {
   return (
     <WagmiConfig client={client}>
       <ConnectKitProvider>{children}</ConnectKitProvider>
