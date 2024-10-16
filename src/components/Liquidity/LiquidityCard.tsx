@@ -9,12 +9,7 @@ import {
   useToken,
 } from "wagmi";
 import { BigNumber, ethers } from "ethers";
-import React,{
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   Strategy,
   Token,
@@ -43,10 +38,18 @@ import clsx from "clsx";
 import { useIsMounted } from "connectkit";
 import { useSSW } from "../../hooks";
 
+export enum ErrorType {
+  APPROVE = "APPROVE",
+  DEPOSIT = "DEPOSIT",
+  REMOVE = "REMOVE",
+  INIT = "INIT",
+}
+
 interface LiquidityCardProps {
   allowedTokenForSingleSide?: string;
   color?: string;
   network: SupportedChainId;
+  onError?: (type: ErrorType, e: Error) => void;
   strategyAddress: string;
 }
 
@@ -61,6 +64,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
   allowedTokenForSingleSide,
   color = "#2463EB",
   network,
+  onError,
   strategyAddress,
 }) => {
   strategyAddress = strategyAddress?.toLowerCase();
@@ -72,8 +76,9 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
   const { data: signer } = useSigner();
   const provider = signer?.provider as ethers.providers.JsonRpcProvider;
 
-  const [strategy, setStrategy] =
-    useState<(Strategy & MetadataStrategy) | null>(null);
+  const [strategy, setStrategy] = useState<
+    (Strategy & MetadataStrategy) | null
+  >(null);
 
   const [isToken0Approved, setIsToken0Approved] = useState<boolean>(false);
   const [isToken1Approved, setIsToken1Approved] = useState<boolean>(false);
@@ -83,22 +88,21 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
   const [strategyAmount0, setStrategyAmount0] = useState<number>(0);
   const [strategyAmount1, setStrategyAmount1] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [currentRange, setCurrentRange] =
-    useState<
-      | {
+  const [currentRange, setCurrentRange] = useState<
+    | {
         lowerTickInA: number;
         upperTickInA: number;
         lowerTickInB: number;
         upperTickInB: number;
       }
-      | undefined
-    >();
+    | undefined
+  >();
 
-  const { isSSWDeposit, isToken1DefaultToken, isLoading: isSSWLoading } = useSSW(
-    network,
-    strategyAddress,
-    provider
-  );
+  const {
+    isSSWDeposit,
+    isToken1DefaultToken,
+    isLoading: isSSWLoading,
+  } = useSSW(network, strategyAddress, provider);
 
   const [allowedToken0, allowedToken1] = useMemo(() => {
     if (!allowedTokenForSingleSide || !strategy) return [true, true];
@@ -138,8 +142,8 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
           ? SingleSideTokenType.ONE
           : SingleSideTokenType.ZERO
         : singleSideToken?.symbol === strategy?.token0.symbol
-          ? SingleSideTokenType.ZERO
-          : SingleSideTokenType.ONE,
+        ? SingleSideTokenType.ZERO
+        : SingleSideTokenType.ONE,
     [singleSideToken?.symbol, strategy?.token0.symbol]
   );
 
@@ -168,15 +172,13 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
         const allowedToken0 =
           !allowedTokenForSingleSide ||
           allowedTokenForSingleSide.toLowerCase() ===
-          (isAddress(allowedTokenForSingleSide)
-            ? info.token0.id.toLowerCase()
-            : info.token0.symbol.toLowerCase());
+            (isAddress(allowedTokenForSingleSide)
+              ? info.token0.id.toLowerCase()
+              : info.token0.symbol.toLowerCase());
         setSingleSideToken(allowedToken0 ? info.token0 : info.token1);
         setRangeToken(info.token0);
       })
-      .catch((e) => {
-        console.error(e);
-      })
+      .catch((e) => onError?.(ErrorType.INIT, e) ?? console.warn(e))
       .finally(() => setLoading(false));
   }, [network, allowedTokenForSingleSide, strategyAddress]);
 
@@ -191,9 +193,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
         setLiquidityRatio(liquidityRatio);
         setCurrentRange(ranges[0] as any);
       })
-      .catch((e) => {
-        console.error(e);
-      });
+      .catch((e) => onError?.(ErrorType.INIT, e) ?? console.warn(e));
   }, [provider, strategyAddress]);
 
   const fetchAllowances = useCallback(() => {
@@ -203,17 +203,20 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
       isStrategyTokenApproved(
         address,
         0,
-        (isSSWDeposit ? isToken1DefaultToken ? amount1 : (amount0) : amount0) ?? 0,
+        (isSSWDeposit ? (isToken1DefaultToken ? amount1 : amount0) : amount0) ??
+          0,
         strategyAddress,
         provider
       ),
-      isSSWDeposit ? Promise.resolve(true) : isStrategyTokenApproved(
-        address,
-        1,
-        amount1 ?? 0,
-        strategyAddress,
-        provider
-      ),
+      isSSWDeposit
+        ? Promise.resolve(true)
+        : isStrategyTokenApproved(
+            address,
+            1,
+            amount1 ?? 0,
+            strategyAddress,
+            provider
+          ),
     ])
       .then(([token0, token1]) => {
         if (isSSWDeposit) {
@@ -229,9 +232,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
           setIsToken1Approved(token1);
         }
       })
-      .catch((e) => {
-        console.error(e);
-      });
+      .catch((e) => onError?.(ErrorType.INIT, e) ?? console.warn(e));
   }, [address, amount0, amount1, provider, strategyAddress]);
 
   const { data: token0Balance, refetch: refetchBalance0 } = useBalance({
@@ -330,7 +331,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
           setUserShareFraction(fraction);
         }
       })
-      .catch(console.warn);
+      .catch((e) => onError?.(ErrorType.INIT, e) ?? console.warn(e));
   }, [address, provider, strategyAddress, strategyToken?.totalSupply]);
 
   const fetchLiquidity = useCallback(() => {
@@ -341,7 +342,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
         setStrategyAmount0(data.amount0Total);
         setStrategyAmount1(data.amount1Total);
       })
-      .catch(console.warn);
+      .catch((e) => onError?.(ErrorType.INIT, e) ?? console.warn(e));
   }, [provider, strategyAddress]);
 
   useEffect(() => {
@@ -423,7 +424,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
       })
       .catch((e) => {
         setApprove0Loading(false);
-        console.error(e);
+        onError?.(ErrorType.APPROVE, e) ?? console.warn(e);
       });
   }, [address, fetchAllowances, provider, strategyAddress]);
 
@@ -445,7 +446,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
       })
       .catch((e) => {
         setApprove1Loading(false);
-        console.error(e);
+        onError?.(ErrorType.APPROVE, e) ?? console.warn(e);
       });
   }, [address, fetchAllowances, provider, strategyAddress]);
 
@@ -474,7 +475,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
       })
       .catch((e) => {
         setDepositLoading(false);
-        console.error(e);
+        onError?.(ErrorType.DEPOSIT, e) ?? console.warn(e);
       });
   }, [
     address,
@@ -512,7 +513,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
       })
       .catch((e) => {
         setWithdrawLoading(false);
-        console.error(e);
+        onError?.(ErrorType.REMOVE, e) ?? console.warn(e);
       });
   }, [
     address,
@@ -522,12 +523,6 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
     strategyAddress,
     userShare,
   ]);
-
-  console.log({
-    isToken0Approved,
-    isToken1Approved,
-    isToken1DefaultToken,
-  });
 
   if (!isMounted) return null;
 
@@ -580,7 +575,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
                     className={clsx(
                       "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                       rangeToken?.symbol === strategy.token0.symbol &&
-                      " bg-white"
+                        " bg-white"
                     )}
                     onClick={() => {
                       setRangeToken(strategy.token0);
@@ -592,7 +587,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
                     className={clsx(
                       "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                       rangeToken?.symbol === strategy.token1.symbol &&
-                      "bg-white"
+                        "bg-white"
                     )}
                     onClick={() => {
                       setRangeToken(strategy.token1);
@@ -697,7 +692,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
                                       className={clsx(
                                         "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                                         singleSideToken?.symbol ===
-                                        strategy.token0.symbol && " bg-white"
+                                          strategy.token0.symbol && " bg-white"
                                       )}
                                       onClick={() => {
                                         setAmount0("");
@@ -712,7 +707,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
                                       className={clsx(
                                         "appearance-none text-xs focus:outline-none px-4 py-2 text-zinc-800 rounded",
                                         singleSideToken?.symbol ===
-                                        strategy.token1.symbol && "bg-white"
+                                          strategy.token1.symbol && "bg-white"
                                       )}
                                       onClick={() => {
                                         setAmount1("");
@@ -845,7 +840,7 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
 
                       <div className="mt-4">
                         {strategy &&
-                          (!isToken0Approved || !isToken1Approved) ? (
+                        (!isToken0Approved || !isToken1Approved) ? (
                           <div className={`flex items-center space-x-2`}>
                             {!isToken0Approved && (
                               <button
@@ -879,8 +874,8 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
                             {depositError
                               ? depositError
                               : depositLoading
-                                ? "Depositing..."
-                                : "Deposit"}
+                              ? "Depositing..."
+                              : "Deposit"}
                           </button>
                         )}
                       </div>
@@ -975,8 +970,8 @@ const LiquidityCard: React.FC<LiquidityCardProps> = ({
                         {withdrawError
                           ? withdrawError
                           : withdrawLoading
-                            ? "Withdrawing..."
-                            : "Withdraw"}
+                          ? "Withdrawing..."
+                          : "Withdraw"}
                       </button>
                     </div>
                   </Tab.Panel>
